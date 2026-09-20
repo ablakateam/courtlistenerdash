@@ -97,9 +97,40 @@ the researcher submits a question.
 | Service isolation | The standalone dashboard restarted cleanly while the separately running Ollama service remained active | Passed |
 | Private-network availability | Loopback and all configured private-network HTTPS health paths returned HTTP 200 | Passed |
 
-The assistant excludes form controls, raw technical payloads, hidden content,
-and its own conversation from browser capture. Public case, docket, oral
-argument, judge, and disclosure information may be used when it is visibly
-rendered, but filing text from RECAP document pages is not captured. The UI
-discloses this boundary before a question is sent and links source references
-back to visible page content where possible.
+The assistant excludes form values, raw technical payloads, hidden content, and
+its own conversation from browser capture. Safe visible control labels may be
+indexed for orientation without their values or external destinations. Public
+case, docket, oral argument, judge, and disclosure information may be used when
+it is visibly rendered, but filing text from RECAP document pages is not
+captured. The UI discloses this boundary before a question is sent and links
+source references back to visible page content where possible.
+
+## Live page-RAG follow-up acceptance
+
+Revision `4d08366` upgraded the assistant from a flat current-page snapshot to
+an ephemeral retrieval layer over the rendered research view. The first local
+health probe during installation reached the ordinary restart window and was
+refused; it was not counted as acceptance evidence. All checks below were made
+after the service reported healthy.
+
+| Check | Observed result | Status |
+|---|---|---|
+| Live page index | The accepted browser identifies rendered text blocks plus visible button, tab, link, and field labels without collecting field values | Passed |
+| Dynamic refresh | The in-memory index watches loaded-content and relevant control-state changes and rebuilds when the route changes | Passed |
+| Relevant-passage retrieval | A large-page regression retrieves navigation actions and question-relevant neighboring passages instead of sending the complete page indiscriminately | Passed |
+| Trusted navigation | Server-reviewed destinations remain available on every route, including privacy-protected workspaces, without capturing the application shell | Passed |
+| Human action boundary | Suggested internal links require selection; other controls can be located and focused but are never autonomously activated | Passed |
+| Live model behavior | `gemma4:31b` joined a visible “Open full opinion” action and displayed holding using two exact indexed sources, retained the current-page caveat, and returned no credential | Passed |
+| Protected workspaces | Backend-enforced protected routes continue to discard submitted body context; the navigation map contains no user data | Passed |
+| Automated regression gate | 22 server/security tests and all six browser workflows passed | Passed |
+| GitHub verification | Type checks, tests, browser acceptance, production audit, and container build passed for the exact feature revision | Passed |
+| Documentation | README includes a plain-language explanation, limitations, and a browser-generated live-index screenshot | Passed |
+| Installed artifacts | The served bundle contains the live index and retrieval-coverage UI; the deployed backend contains `live_page_rag` retrieval and trusted navigation | Passed |
+| Encrypted configuration | Existing provider configuration survived installation as a service-owned 0600 encrypted envelope | Passed |
+| Service isolation | The dashboard restarted cleanly while the separate Ollama service remained active | Passed |
+| Private-network availability | Loopback and all configured private-network HTTPS health paths returned HTTP 200 after restart | Passed |
+
+The page index exists only in browser memory and provider traffic begins only
+after an explicit question. It is not pixel-based screen capture, it does not
+read content that has not been rendered, and it does not replace the complete-
+opinion analysis pipeline.

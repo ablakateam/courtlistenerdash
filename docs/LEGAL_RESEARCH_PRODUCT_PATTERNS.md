@@ -83,11 +83,12 @@ a branded chat screen; it is eliminating the context reconstruction lawyers
 otherwise perform when moving between results, documents, and tools.
 
 CourtListenerDash response: provide a persistent bottom-right assistant that
-identifies the open workspace, offers task-specific starting questions, takes
-a fresh snapshot only when asked, and cites exact current-page passages. It
-never invents authority or silently replaces the complete-opinion pipeline.
-Protected workspaces retain navigation guidance without sending their page
-bodies to the provider.
+identifies the open workspace, offers task-specific starting questions, and
+maintains a temporary index of visible text and safe control labels while open.
+It sends retrieved passages only when asked and cites exact current-page
+sources. It never invents authority, operates a control autonomously, or
+silently replaces the complete-opinion pipeline. Protected workspaces retain
+navigation guidance without sending their page bodies to the provider.
 
 ### Preserve history without silently rerunning research
 
