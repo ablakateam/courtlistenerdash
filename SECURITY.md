@@ -49,16 +49,23 @@ Selecting Ollama Cloud therefore sends the public opinion text to Ollama's
 hosted API; selecting local Ollama keeps that provider hop on the configured
 server unless the chosen local model is itself a cloud shortcut.
 
-The page-aware assistant sends a question and a fresh, size-bounded snapshot of
-allowed current-page text only after the authenticated user submits the prompt.
-This may include a visible research query as well as public CourtListener data.
-Inputs, forms, hidden content, raw technical JSON, and the assistant itself are
-not captured. Settings, MCP/API diagnostics, alerts, saved research, and RECAP
-filing text are protected workspaces whose page bodies are never included. The
-backend independently enforces that route policy instead of trusting the
-browser flag. Model answers must cite a backend-assigned paragraph ID; invalid
-sources are discarded and displayed excerpts are copied from the submitted
-page text. Conversation history helps interpret follow-ups but is not evidence.
+While its panel is open, the page-aware assistant maintains a temporary in-
+memory index of allowed current-page text and safe labels for visible buttons,
+tabs, and links. The provider receives nothing until the authenticated user
+submits a question; the backend sends only the passages retrieved for that
+question. This may include a visible research query as well as public
+CourtListener data. Input and textarea values, hidden content, raw technical
+JSON, and the assistant itself are not captured. Same-origin link paths may be
+indexed, but external URLs and query strings are not. The model can describe
+or suggest a visible control but cannot activate it.
+
+Settings, MCP/API diagnostics, alerts, saved research, and RECAP filing text
+are protected workspaces whose page bodies are never included. The backend
+independently enforces that route policy instead of trusting the browser flag.
+Model answers must cite a backend-assigned paragraph ID; invalid sources are
+discarded and displayed excerpts are copied from the submitted page text.
+Conversation history helps interpret follow-ups but is not evidence. The live
+index is rebuilt on navigation and is not persisted as browsing history.
 
 Public search questions can still reveal a legal strategy, and users can type
 sensitive text into any prompt. The UI therefore states when the question and

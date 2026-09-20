@@ -72,7 +72,7 @@ follow.
 |---|---|
 | Find an authority | Search case names, citations, issues, courts, judges, dates, and other CourtListener fields. |
 | Explore an unfamiliar issue | Ask a natural-language research question and keep the legal purpose visible beside CourtListener-ranked authorities. |
-| Get help without leaving the page | Open the persistent Legal Research Assistant to explain the current workspace, summarize allowed visible material, ask follow-ups, jump to exact passages, or follow a suggested research destination. |
+| Get help without leaving the page | Open the persistent Legal Research Assistant to explain the current workspace, inspect its live page index, summarize allowed visible material, identify available controls, ask follow-ups, jump to exact passages, or follow a suggested research destination. |
 | Understand a long case | Read the complete opinion and, when an AI provider is configured, generate a structured analysis with holding, rule, facts, reasoning, disposition, and exact supporting passages. |
 | Follow federal litigation | Open a RECAP docket, move through its timeline, parties, attorneys, filings, attachments, and available public documents. |
 | Check a citation | Extract or resolve citations against CourtListener while distinguishing located, unresolved, ambiguous, and mismatched results. |
@@ -144,19 +144,37 @@ shown as a grounded conclusion.
 
 A persistent **Legal Research Assistant** is available at the bottom-right of
 every authenticated page. It understands which workspace is open, can explain
-the page, summarize the public CourtListener material currently visible, answer
-follow-up questions, and return the lawyer to each exact supporting passage.
-It never presents a current-screen snapshot as a complete-document review; long
-opinions still use the dedicated section-by-section analysis pipeline.
+the page, summarize the public CourtListener material currently visible,
+identify visible buttons, tabs, and internal links, answer follow-up questions,
+and return the lawyer to each exact supporting passage. A trusted navigation
+map also lets it explain where the platform's major research areas live.
+
+![CourtListenerDash assistant showing its live index of the current page and available actions](docs/images/live-page-index.png)
+
+This is real current-page context, not a prerecorded page description. Its
+small page-RAG (retrieval-augmented generation) layer observes the rendered
+research area while the assistant is open, including changes such as newly
+loaded results. It creates a temporary index of visible text and safe control
+labels, then retrieves the passages most relevant to the lawyer's question
+before calling the configured model. The index exists only in memory; it is not
+a new database of browsing activity. Suggested controls are shown as links or
+as items the lawyer can locate—the model never clicks, submits, deletes,
+purchases, or changes account state by itself.
+
+It does not inspect screen pixels, read hidden tabs, or automatically understand
+material that has not been loaded into the page. It never presents a current-
+screen snapshot as a complete-document review; long opinions still use the
+dedicated section-by-section analysis pipeline.
 
 ![CourtListenerDash page-aware legal research assistant grounded in the current dashboard](docs/images/page-aware-legal-assistant.png)
 
-The assistant sends the lawyer's question and the allowed current-page snapshot
-only after the lawyer asks. That snapshot can include a visible research query
-as well as public CourtListener results. Credential forms, Settings, MCP/API diagnostics,
-alerts, saved research, and RECAP filing text are excluded from page capture.
-Those workspaces still receive navigation help from fixed, reviewed product
-guidance. The interface always shows which boundary applies.
+The assistant sends the lawyer's question and only the retrieved portions of
+the allowed current-page snapshot after the lawyer asks. That snapshot can
+include a visible research query, public CourtListener results, and labels for
+visible controls, but never typed form values. Credential forms, Settings,
+MCP/API diagnostics, alerts, saved research, and RECAP filing text are excluded
+from page capture. Those workspaces still receive navigation help from fixed,
+reviewed product guidance. The interface always shows which boundary applies.
 
 The optional provider connection supports paid
 [Ollama Cloud](https://docs.ollama.com/cloud), a loopback Ollama service,

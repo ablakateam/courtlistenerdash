@@ -1,6 +1,6 @@
 # Grounded legal-AI research workflow
 
-Reviewed: 2026-09-19
+Reviewed: 2026-09-20
 
 ## Research purpose
 
@@ -93,25 +93,35 @@ The persistent assistant is an orientation and current-screen analysis layer.
 It does not replace CourtListener search, citation verification, or complete-
 opinion analysis.
 
-1. The browser identifies the current route and takes a fresh snapshot only
-   when the lawyer submits a question.
-2. Form controls, technical JSON, hidden elements, and assistant content are
-   removed before capture.
-3. Settings, MCP/API diagnostics, alerts, saved research, and RECAP filing text
+1. When the panel opens, the browser builds a temporary index of the current
+   rendered research area and refreshes it as results or tabs change.
+2. The index contains visible text plus labels for visible buttons, tabs, and
+   links. It records only same-origin paths for internal links, never form
+   values or external credentials.
+3. Forms, technical JSON, hidden elements, and assistant content are removed
+   before indexing. Nothing is sent to the provider until the lawyer asks.
+4. Settings, MCP/API diagnostics, alerts, saved research, and RECAP filing text
    use protected mode: only the question and fixed page-purpose guidance leave
    the application.
-4. The backend assigns stable paragraph IDs to the allowed snapshot and treats
+5. A lightweight retrieval layer ranks the indexed passages for the question,
+   gives visible actions extra weight for navigation requests, and preserves a
+   representative cross-section for page-summary requests.
+6. The backend assigns stable paragraph IDs to the retrieved snapshot and treats
    both the page and prior conversation as untrusted material.
-5. The model must answer in a strict JSON schema and cite supplied paragraph
+7. The model must answer in a strict JSON schema and cite supplied paragraph
    IDs. Answers without a valid paragraph reference are discarded.
-6. Displayed excerpts are copied from the captured page, never accepted from
+8. Displayed excerpts are copied from the captured page, never accepted from
    model-generated quotation text.
-7. The lawyer can expand a source and locate the corresponding passage on the
-   live page.
-8. Each session permits one active assistant request, preventing accidental
+9. The lawyer can expand a source and locate the corresponding passage or
+   control on the live page. Internal link suggestions navigate only after the
+   lawyer selects them; the model never operates a control autonomously.
+10. A reviewed server-side navigation map answers platform-orientation
+    questions without capturing the persistent application shell.
+11. Each session permits one active assistant request, preventing accidental
    duplicate paid-provider calls.
-9. Oversized snapshots are reduced conservatively and produce a visible
-   incomplete-context caveat.
+12. Oversized snapshots are reduced conservatively and produce a visible
+    incomplete-context caveat. Normal retrieval reports how many indexed
+    passages were selected for the answer.
 
 The distinction is deliberate: **current-page answer** means the visible and
 captured screen; **complete-opinion analysis** means every retrieved opinion

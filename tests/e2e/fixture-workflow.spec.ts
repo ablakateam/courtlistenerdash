@@ -230,6 +230,7 @@ test("all top-level routes and mobile navigation remain reachable", async ({ pag
 
 test("page-aware legal assistant stays grounded and protects sensitive workspaces", async ({ page }) => {
   let protectedContext: string | null = null;
+  let dashboardContext: string | null = null;
   await page.route("**/api/status", async (route) => {
     const response = await route.fetch();
     const body = await response.json();
@@ -252,6 +253,7 @@ test("page-aware legal assistant stays grounded and protects sensitive workspace
   await page.route("**/api/assistant/ask", async (route) => {
     const request = route.request().postDataJSON() as { route: string; contextText: string; pageTitle: string };
     if (request.route === "/settings") protectedContext = request.contextText;
+    if (request.route === "/") dashboardContext = request.contextText;
     const source = request.route === "/settings"
       ? "PAGE PURPOSE AND BOUNDARY Settings content and form data are intentionally excluded from AI context."
       : "Find the law. Follow the record.";
@@ -265,17 +267,20 @@ test("page-aware legal assistant stays grounded and protects sensitive workspace
         provider: "ollama",
         model: "gemma4:31b",
         generatedAt: new Date().toISOString(),
-        context: { route: request.route, pageTitle: request.pageTitle, capturedCharacters: request.contextText.length, truncated: false, protected: request.route === "/settings" },
+        context: { route: request.route, pageTitle: request.pageTitle, capturedCharacters: request.contextText.length, indexedPassages: 12, retrievedPassages: 8, availableActions: request.route === "/settings" ? 0 : 4, retrievalMode: "live_page_rag", truncated: false, protected: request.route === "/settings" },
       }),
     });
   });
   await signIn(page);
   await page.getByRole("button", { name: "Open legal research assistant" }).click();
   await expect(page.getByRole("dialog", { name: "Page-aware legal research assistant" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Live page index" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Start legal research" })).toHaveAttribute("href", "/research");
+  await capture(page, "live-page-index");
   await page.getByRole("button", { name: "What can I do on this page?" }).click();
   await expect(page.getByText("This dashboard starts and resumes CourtListener-grounded legal research.")).toBeVisible();
   await expect(page.getByText("Page source P1")).toBeVisible();
+  expect(dashboardContext).toContain("AVAILABLE PAGE ACTIONS");
   await capture(page, "page-aware-legal-assistant");
   await expectAccessible(page);
 

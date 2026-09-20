@@ -149,6 +149,10 @@ export interface PageAssistantAnswer {
     route: string;
     pageTitle: string;
     capturedCharacters: number;
+    indexedPassages: number;
+    retrievedPassages: number;
+    availableActions: number;
+    retrievalMode: "live_page_rag";
     truncated: boolean;
     protected: boolean;
   };

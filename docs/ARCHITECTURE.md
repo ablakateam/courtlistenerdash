@@ -22,15 +22,22 @@ CourtListener credential.
 
 ```text
 Authenticated browser page
-  → explicit assistant question + sanitized allowed-page snapshot
-    → CourtListenerDash grounding and route-policy boundary
-      → configured legal-AI provider
-        → source-ID validation
-          → answer with exact page excerpts
+  → ephemeral live index of visible text + safe action labels
+    → explicit assistant question
+      → server route policy + relevant-passage retrieval
+        → configured legal-AI provider
+          → source-ID validation
+            → answer with exact page excerpts
 ```
 
 Protected routes send only the question and fixed page-purpose guidance. The
 backend applies the route policy again even if a browser submits page text.
+The live index refreshes when the rendered research area changes, remains in
+memory, and is rebuilt on navigation. It is not written to the application
+database. Input values, hidden content, raw technical payloads, and the
+assistant conversation are never indexed. Visible buttons and links are
+descriptive context only; the model cannot activate a control or perform an
+account-changing action.
 
 ## Research surfaces
 
@@ -90,6 +97,8 @@ environment variables or mounted secret files. None belong in Git.
   encrypted server-side provider configuration. Credential reuse is bound to
   the exact provider and normalized endpoint.
 - The page assistant is a current-screen aid, not a background recorder. It
-  captures allowed text only on explicit submission, labels truncated context,
-  validates source IDs, and never substitutes for the complete-opinion
-  analysis pipeline.
+  maintains a temporary index while open but sends retrieved content only on
+  explicit submission. It labels truncated context, validates source IDs, and
+  never substitutes for the complete-opinion analysis pipeline. Navigation
+  questions also use a reviewed server-side route map so the surrounding shell
+  does not need to be captured.

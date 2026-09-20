@@ -251,7 +251,21 @@ research, alert queries, raw diagnostics, and filing text can reveal secrets,
 strategy, or material outside the approved provider boundary. A malicious or
 defective browser also cannot be trusted to label a route protected.
 
-Action: maintain an explicit route policy on both sides. Capture only after an
-intentional question, strip forms and technical output in the browser, and
-have the backend discard all submitted page text for protected routes before
-calling the provider.
+Action: maintain an explicit route policy on both sides. Index only the allowed
+research area while the assistant is open, send context only after an
+intentional question, strip form values and technical output in the browser,
+and have the backend discard all submitted page text for protected routes
+before calling the provider.
+
+## 2026-09-20 — Page context needs structure, not only text
+
+A flat DOM text dump can summarize visible prose, but it does not reliably tell
+the assistant which controls exist, where they lead, or which part of a long
+screen answers the question. Sending the complete page on every turn also adds
+latency and provider cost without improving a focused navigation answer.
+
+Action: maintain an ephemeral index of rendered text and safe action labels,
+refresh it as the research view changes, and retrieve only the most relevant
+passages for each question. Keep typed values and protected workspaces outside
+the index, use a reviewed server-side map for platform navigation, and require
+the lawyer to activate every suggested control.

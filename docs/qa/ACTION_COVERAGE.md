@@ -36,6 +36,7 @@ Status meanings:
 | AI case analysis | Disabled/fail-closed state | Accepted | No provider means no analysis can be invented. |
 | AI case analysis | Long-document analysis, grounded questions, regeneration | Configuration blocked | Requires a practice-approved provider and model-quality evaluation. |
 | Page-aware assistant | Persistent launcher, page explanation, grounded answer, follow-up, exact source | Live + fixture accepted | Ollama answered a public case excerpt with a verified passage; deterministic browser covers conversation and source presentation. |
+| Page-aware assistant | Live page index, visible action inventory, trusted navigation, relevant-passage retrieval | Accepted | Unit coverage proves navigation questions retrieve available controls from a large page; browser acceptance proves the live index and action context are present. |
 | Page-aware assistant | Protected Settings, console, alert, saved, and RECAP contexts | Accepted | Backend unit test and browser assertion prove protected page text is not included in the provider request. |
 | Page-aware assistant | Mobile panel and WCAG review | Accepted | Responsive panel is included in the six-workflow serious/critical accessibility gate. |
 | PACER / RECAP | Overview and chronological timeline | Live + fixture accepted | Known live docket and deterministic regression. |

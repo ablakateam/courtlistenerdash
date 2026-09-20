@@ -19,6 +19,12 @@ under **Unreleased** until its production-readiness checks are complete.
 - Responsive and accessibility-tested assistant panel with current-page source
   location, truncation notices, one-active-request protection, and an honest
   distinction between a screen snapshot and complete-opinion analysis.
+- Ephemeral live-page retrieval index that refreshes as rendered results
+  change, inventories safe visible button/link/tab labels, and selects relevant
+  passages for each assistant question without storing browsing history.
+- Trusted platform-navigation grounding and lawyer-confirmed action links; the
+  model can explain or locate a control but cannot click, submit, delete,
+  purchase, or mutate anything autonomously.
 - Live Ollama model discovery in Settings, with separate paid Ollama Cloud,
   local-service, and compatible-endpoint choices; cloud/local grouping; model
   metadata; and a manual fallback for servers that do not expose a catalog.
@@ -119,7 +125,7 @@ under **Unreleased** until its production-readiness checks are complete.
 ### Verification
 
 - TypeScript checks pass.
-- 21 automated tests pass.
+- 22 automated tests pass.
 - Production browser bundle builds successfully.
 - Initial Docker image and GitHub CI builds pass.
 - All 19 expected official CourtListener MCP tools were discovered live.
@@ -151,5 +157,8 @@ under **Unreleased** until its production-readiness checks are complete.
 - A live `gemma4:31b` page-assistant request extracted the visible *Brown v.
   Board of Education* holding, retained an exact verified source passage,
   disclosed the current-screen limitation, and returned no credential data.
+- A live page-RAG request joined a visible opinion-navigation control with the
+  displayed *Brown* holding, bound both observations to exact indexed sources,
+  preserved the current-page caveat, and returned no credential data.
 - The release candidate was installed on a private-network validation host and
   served with the expected security headers.

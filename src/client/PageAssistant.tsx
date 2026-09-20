@@ -35,6 +35,23 @@ interface ConversationItem {
   response?: PageAssistantAnswer;
 }
 
+interface VisiblePageAction {
+  id: string;
+  label: string;
+  kind: "link" | "button" | "tab" | "control";
+  target: string | null;
+  section: string | null;
+  disabled: boolean;
+}
+
+interface PageSnapshot {
+  text: string;
+  truncated: boolean;
+  blockCount: number;
+  actions: VisiblePageAction[];
+  fingerprint: string;
+}
+
 const MAX_CONTEXT_CHARACTERS = 180_000;
 
 function pageGuide(pathname: string): PageGuide {
@@ -70,18 +87,85 @@ function pageTitle(fallback: string): string {
   return heading?.innerText.trim().slice(0, 300) || fallback;
 }
 
-function collectPageContext(protectedPage: boolean): { text: string; truncated: boolean } {
-  if (protectedPage) return { text: "", truncated: false };
+function visible(element: HTMLElement): boolean {
+  return element.offsetParent !== null && element.getAttribute("aria-hidden") !== "true";
+}
+
+function normalizedText(value: string | null | undefined, maximum = 500): string {
+  return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, maximum);
+}
+
+function fingerprintText(value: string): string {
+  let hash = 2_166_136_261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16_777_619);
+  }
+  return `${value.length}:${hash >>> 0}`;
+}
+
+function elementLabel(element: HTMLElement): string {
+  if (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) {
+    const explicit = element.getAttribute("aria-label") || element.getAttribute("title") || element.getAttribute("placeholder");
+    if (explicit) return normalizedText(explicit, 220);
+    const label = element.labels?.[0];
+    const directText = label ? [...label.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE).map((node) => node.textContent ?? "").join(" ") : "";
+    return normalizedText(directText, 220);
+  }
+  return normalizedText(element.innerText || element.getAttribute("aria-label") || element.getAttribute("title"), 220);
+}
+
+function actionSection(element: HTMLElement): string | null {
+  const region = element.closest<HTMLElement>("section, article, [role='region'], main");
+  const heading = region?.querySelector<HTMLElement>("h1, h2, h3, h4, [role='heading']");
+  return normalizedText(heading?.innerText, 160) || null;
+}
+
+function actionTarget(element: HTMLElement): string | null {
+  if (!(element instanceof HTMLAnchorElement)) return null;
+  const raw = element.getAttribute("href");
+  if (!raw || raw.startsWith("#")) return null;
+  try {
+    const url = new URL(raw, window.location.href);
+    if (url.origin !== window.location.origin || url.username || url.password) return null;
+    return url.pathname;
+  } catch {
+    return null;
+  }
+}
+
+function collectPageContext(protectedPage: boolean): PageSnapshot {
+  if (protectedPage) return { text: "", truncated: false, blockCount: 0, actions: [], fingerprint: "protected" };
   const root = document.querySelector<HTMLElement>("main.content");
-  if (!root) return { text: "", truncated: false };
+  if (!root) return { text: "", truncated: false, blockCount: 0, actions: [], fingerprint: "empty" };
   const selectors = "h1, h2, h3, h4, p, li, dt, dd, th, td, blockquote, pre, .banner, .status-pill, .collection-badge";
   const excluded = "form, [data-ai-private], .technical-view, .technical-details, .json-block, .legal-assistant";
   const values: string[] = [];
-  let length = 0;
+  const actions: VisiblePageAction[] = [];
+  const seenActions = new Set<string>();
+  for (const [index, element] of [...root.querySelectorAll<HTMLElement>("a[href], button, [role='button'], [role='tab'], summary, input:not([type='hidden']):not([type='password']), select, textarea")].entries()) {
+    if (element.closest("[data-ai-private], .technical-view, .technical-details, .json-block, .legal-assistant") || !visible(element)) continue;
+    const label = elementLabel(element);
+    if (!label) continue;
+    const role = element.getAttribute("role");
+    const kind: VisiblePageAction["kind"] = element instanceof HTMLAnchorElement ? "link" : role === "tab" ? "tab" : element instanceof HTMLButtonElement ? "button" : "control";
+    const target = actionTarget(element);
+    const disabled = element.matches(":disabled, [aria-disabled='true']");
+    const section = actionSection(element);
+    const key = `${kind}|${label.toLowerCase()}|${target ?? ""}|${disabled}`;
+    if (seenActions.has(key)) continue;
+    seenActions.add(key);
+    actions.push({ id: `A${index + 1}`, label, kind, target, section, disabled });
+    if (actions.length >= 80) break;
+  }
+  const actionText = actions.length
+    ? `AVAILABLE PAGE ACTIONS\n\n${actions.map((action) => `[ACTION ${action.id}] ${action.kind.charAt(0).toUpperCase()}${action.kind.slice(1)} "${action.label}"${action.target ? ` opens ${action.target}` : ""}${action.section ? ` in ${action.section}` : ""}${action.disabled ? " (currently disabled)" : ""}.`).join("\n\n")}`
+    : "AVAILABLE PAGE ACTIONS\n\nNo visible page-specific actions were detected.";
+  let length = actionText.length + 2;
   let truncated = false;
   for (const element of root.querySelectorAll<HTMLElement>(selectors)) {
-    if (element.closest(excluded) || element.offsetParent === null) continue;
-    const value = element.innerText.replace(/\s+/g, " ").trim();
+    if (element.closest(excluded) || !visible(element)) continue;
+    const value = normalizedText(element.innerText, 20_000);
     if (!value || value.length < 2 || values[values.length - 1] === value) continue;
     if (length + value.length + 2 > MAX_CONTEXT_CHARACTERS) {
       truncated = true;
@@ -90,13 +174,31 @@ function collectPageContext(protectedPage: boolean): { text: string; truncated: 
     values.push(value);
     length += value.length + 2;
   }
-  return { text: values.join("\n\n"), truncated };
+  const text = `${actionText}\n\nVISIBLE PAGE CONTENT\n\n${values.join("\n\n")}`;
+  return { text, truncated, blockCount: values.length, actions, fingerprint: fingerprintText(text) };
+}
+
+function locatePageAction(label: string): void {
+  const normalized = normalizedText(label).toLowerCase();
+  if (!normalized) return;
+  const elements = document.querySelectorAll<HTMLElement>("main.content a[href], main.content button, main.content [role='button'], main.content [role='tab'], main.content summary, main.content input:not([type='hidden']):not([type='password']), main.content select, main.content textarea");
+  const target = [...elements].find((element) => elementLabel(element).toLowerCase() === normalized);
+  if (!target) return;
+  target.classList.add("assistant-source-focus");
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  target.focus({ preventScroll: true });
+  window.setTimeout(() => target.classList.remove("assistant-source-focus"), 3_500);
 }
 
 function locateSource(source: SourcePassage): void {
+  const actionLabel = source.excerpt.match(/\[ACTION\s+A\d+\]\s+(?:Link|Button|Tab|Control)\s+"([^"]+)"/i)?.[1];
+  if (actionLabel) {
+    locatePageAction(actionLabel);
+    return;
+  }
   const needle = source.excerpt.replace(/\s+/g, " ").trim().toLowerCase().slice(0, 120);
   if (!needle) return;
-  const elements = document.querySelectorAll<HTMLElement>("main.content h1, main.content h2, main.content h3, main.content p, main.content li, main.content dd, main.content td, main.content blockquote, main.content pre, main.content .banner");
+  const elements = document.querySelectorAll<HTMLElement>("main.content h1, main.content h2, main.content h3, main.content p, main.content li, main.content dd, main.content td, main.content blockquote, main.content pre, main.content .banner, main.content a, main.content button, main.content summary");
   const target = [...elements].find((element) => element.innerText.replace(/\s+/g, " ").trim().toLowerCase().includes(needle));
   if (!target) return;
   target.classList.add("assistant-source-focus");
@@ -113,6 +215,7 @@ export function PageAssistant({ aiStatus }: { aiStatus: LegalAiStatus | null }) 
   const location = useLocation();
   const guide = useMemo(() => pageGuide(location.pathname), [location.pathname]);
   const [open, setOpen] = useState(false);
+  const [snapshot, setSnapshot] = useState<PageSnapshot | null>(null);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<ConversationItem[]>([]);
   const [busy, setBusy] = useState(false);
@@ -122,6 +225,7 @@ export function PageAssistant({ aiStatus }: { aiStatus: LegalAiStatus | null }) 
     setMessages([]);
     setQuestion("");
     setError("");
+    setSnapshot(null);
   }, [location.pathname]);
   useEffect(() => {
     if (!open) return;
@@ -132,11 +236,32 @@ export function PageAssistant({ aiStatus }: { aiStatus: LegalAiStatus | null }) 
   useEffect(() => {
     if (conversationRef.current) conversationRef.current.scrollTop = conversationRef.current.scrollHeight;
   }, [messages, busy, error]);
+  useEffect(() => {
+    if (!open) return;
+    const root = document.querySelector<HTMLElement>("main.content");
+    let timer: number | undefined;
+    const refresh = () => {
+      const next = collectPageContext(guide.protected);
+      setSnapshot((current) => current?.fingerprint === next.fingerprint ? current : next);
+    };
+    refresh();
+    if (!root || guide.protected) return;
+    const observer = new MutationObserver(() => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(refresh, 180);
+    });
+    observer.observe(root, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["disabled", "aria-disabled", "aria-hidden", "href", "hidden"] });
+    return () => {
+      window.clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [open, guide]);
 
   async function ask(value: string) {
     const submitted = value.trim();
     if (!submitted || busy) return;
     const snapshot = collectPageContext(guide.protected);
+    setSnapshot(snapshot);
     const title = pageTitle(guide.title);
     const history: PageAssistantTurn[] = messages.slice(-6).map((item) => ({ role: item.role, text: item.text }));
     setQuestion("");
@@ -177,14 +302,19 @@ export function PageAssistant({ aiStatus }: { aiStatus: LegalAiStatus | null }) 
         <span><strong>{guide.protected ? "Privacy-protected guidance" : "Current-page context"}</strong>{guide.summary}</span>
       </div>
       <div className="assistant-conversation" ref={conversationRef} aria-live="polite">
-        {!messages.length && <div className="assistant-welcome"><span className="eyebrow">Page-aware help</span><h3>How can I help with this screen?</h3><p>{guide.summary}</p><div className="assistant-prompts">{guide.prompts.map((prompt) => <button type="button" key={prompt} onClick={() => void ask(prompt)}>{prompt}<ChevronRight size={13} /></button>)}</div>{guide.links?.length ? <nav className="assistant-workflow-links" aria-label="Suggested research destinations">{guide.links.map((link) => <Link key={link.to} to={link.to} onClick={() => setOpen(false)}>{link.label}<ChevronRight size={12} /></Link>)}</nav> : null}</div>}
+        {!messages.length && <div className="assistant-welcome"><span className="eyebrow">Page-aware help</span><h3>How can I help with this screen?</h3><p>{guide.summary}</p>{!guide.protected && snapshot && <section className="assistant-page-map" aria-label="Live page index"><header><strong>Live page index</strong><span>{snapshot.blockCount} text blocks · {snapshot.actions.length} actions</span></header>{snapshot.actions.length ? <div>{snapshot.actions.slice(0, 6).map((action) => action.target && !action.disabled ? <Link key={action.id} to={action.target} onClick={() => setOpen(false)}>{action.label}<ChevronRight size={11} /></Link> : <button type="button" key={action.id} disabled={action.disabled} onClick={() => locatePageAction(action.label)}>{action.label}{!action.disabled && <ChevronRight size={11} />}</button>)}</div> : <small>The page has no visible page-specific controls yet.</small>}</section>}<div className="assistant-prompts">{guide.prompts.map((prompt) => <button type="button" key={prompt} onClick={() => void ask(prompt)}>{prompt}<ChevronRight size={13} /></button>)}</div>{guide.links?.length ? <nav className="assistant-workflow-links" aria-label="Suggested research destinations">{guide.links.map((link) => <Link key={link.to} to={link.to} onClick={() => setOpen(false)}>{link.label}<ChevronRight size={12} /></Link>)}</nav> : null}</div>}
         {messages.map((message, index) => <article className={`assistant-message ${message.role}`} key={`${message.role}-${index}`}>
           <span>{message.role === "user" ? "You" : "Assistant"}</span>
           <p>{message.text}</p>
-          {message.response?.answer?.sources.length ? <div className="assistant-sources">{message.response.answer.sources.map((source) => { const guidance = /^(?:PAGE PURPOSE|CURRENT PAGE TITLE|No page body)/i.test(source.excerpt); return <details key={source.paragraph}><summary><BadgeCheck size={12} />{guidance ? "Platform guidance" : `Page source ${source.paragraph}`}</summary><blockquote>{source.excerpt}</blockquote>{!guidance && <button type="button" className="text-button" onClick={() => locateSource(source)}>Locate on screen</button>}</details>; })}</div> : null}
+          {message.response?.answer?.sources.length ? <div className="assistant-sources">{message.response.answer.sources.map((source) => {
+            const guidance = /^(?:PAGE PURPOSE|CURRENT PAGE TITLE|TRUSTED PLATFORM NAVIGATION|No page body)/i.test(source.excerpt);
+            const action = source.excerpt.match(/^\[ACTION\s+A\d+\]\s+(?:Link|Button|Tab|Control)\s+"([^"]+)"/i);
+            const displayedExcerpt = action ? source.excerpt.replace(/^\[ACTION\s+A\d+\]\s+/i, "") : source.excerpt;
+            return <details key={source.paragraph}><summary><BadgeCheck size={12} />{guidance ? "Platform guidance" : action ? `Page action: ${action[1]}` : `Page source ${source.paragraph}`}</summary><blockquote>{displayedExcerpt}</blockquote>{!guidance && <button type="button" className="text-button" onClick={() => locateSource(source)}>Locate on screen</button>}</details>;
+          })}</div> : null}
           {message.response?.caveats.map((caveat) => <small key={caveat}><AlertTriangle size={12} />{caveat}</small>)}
           {message.response?.suggestedQuestions.length ? <div className="assistant-followups">{message.response.suggestedQuestions.map((prompt) => <button type="button" key={prompt} onClick={() => void ask(prompt)}>{prompt}</button>)}</div> : null}
-          {message.response && <footer>{humanizeProvider(message.response.provider)} · {message.response.model} · current-page answer</footer>}
+          {message.response && <footer>{humanizeProvider(message.response.provider)} · {message.response.model} · current-page answer{message.response.context.retrievedPassages ? ` · ${message.response.context.retrievedPassages}/${message.response.context.indexedPassages} passages retrieved` : ""}</footer>}
         </article>)}
         {busy && <div className="assistant-thinking"><LoaderCircle className="spin" size={16} /><span>Reading the current page and checking source passages…</span></div>}
         {error && <div className="assistant-error"><AlertTriangle size={15} /><span>{error}</span></div>}

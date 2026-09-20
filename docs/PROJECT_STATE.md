@@ -64,7 +64,7 @@ These rules are architectural requirements, not optional design preferences:
 | Semantic Search | Implemented and browser-tested | Searches CourtListener opinions semantically while preserving explicit research intent. |
 | Cases and opinions | Implemented and browser-tested | Consolidated workspace includes metadata, opinion reading, parties, authorities, related opinions, docket links, and oral records where available. |
 | AI case analysis | Implemented; provider configuration required | Long opinions are processed in sections; only source-linked conclusions render. Settings discovers and groups live Ollama Cloud/local models without exposing the key. No provider key is bundled. |
-| Page-aware legal assistant | Implemented, browser-tested, and live-provider tested | Persistent helper explains each workspace and answers from a fresh allowed-page snapshot with exact passages. A visible research query may be included; protected routes exclude their page bodies. Current-screen answers are not complete-document reviews. |
+| Page-aware legal assistant | Implemented, browser-tested, and live-provider tested | Persistent helper builds an ephemeral live index of rendered text and safe action labels, retrieves question-relevant passages, explains workspaces and navigation, and returns exact sources. A visible research query may be included; protected routes exclude their page bodies. It cannot operate controls, and current-screen answers are not complete-document reviews. |
 | PACER/RECAP research | Implemented and browser-tested | Searches CourtListener's RECAP archive and presents dockets, entries, parties, attorneys, documents, attachments, and available PDFs. Coverage may be incomplete. |
 | Paid PACER Fetch | **Not implemented** | Direct PACER credential submission and paid purchasing through `/recap-fetch/` require a separate security, fee-confirmation, sealed-record, and status-monitoring design. Read-only fetch records remain inspectable through generic MCP endpoints. |
 | RECAP Pray and Pay | Implemented behind explicit confirmation | Requests notification when an unavailable document is later contributed; it does not purchase the document. |
@@ -121,9 +121,9 @@ See [SECURITY.md](../SECURITY.md) for the complete security model.
 | Gate | Accepted baseline |
 |---|---|
 | Type safety | Client and server TypeScript checks pass. |
-| Backend/security regression | 21 automated tests pass. |
+| Backend/security regression | 22 automated tests pass. |
 | Deterministic browser acceptance | Six focused workflows pass against CourtListener-shaped fixture data without spending CourtListener or AI-provider quota. |
-| Browser scope | Authentication, primary research flow, public-record workspaces, citation/alert/developer tools, all top-level routes, mobile navigation, recovery states, Ollama cloud-model selection, grounded page-assistant conversation, protected-context exclusion, and administrative settings. |
+| Browser scope | Authentication, primary research flow, public-record workspaces, citation/alert/developer tools, all top-level routes, mobile navigation, recovery states, Ollama cloud-model selection, grounded page-assistant conversation, live page-index/action capture, protected-context exclusion, and administrative settings. |
 | Accessibility | Representative desktop and mobile workspaces have no serious or critical automated WCAG findings. |
 | Production build | Vite client and Node server build successfully. |
 | Container | The production Docker image builds in GitHub Actions. |
@@ -149,7 +149,9 @@ not replace deliberately paced live CourtListener acceptance.
   capacity.
 - Page-aware assistant quality was live-verified with a public *Brown v. Board
   of Education* excerpt: `gemma4:31b` returned the visible holding with an exact
-  validated passage and the current-screen limitation.
+  validated passage and the current-screen limitation. The live page-RAG
+  follow-up also grounded an opinion-navigation action and the holding in two
+  separate exact indexed sources without returning credential data.
 - Remaining live, responsive, performance, and action-level acceptance work is
   tracked in the [roadmap](ROADMAP.md) and public issue tracker.
 - A formal open-source license has not been selected. Public visibility alone

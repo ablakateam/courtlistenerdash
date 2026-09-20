@@ -64,6 +64,9 @@ Status: **In progress**
 - [x] Add a persistent page-aware legal research assistant with exact source
       passages, multi-turn questions, route-specific guidance, protected
       workspaces, live Ollama acceptance, and responsive accessibility coverage
+- [x] Add an ephemeral live-page retrieval index for rendered text, visible
+      controls, trusted platform navigation, and question-focused context
+      selection without autonomous UI actions or persisted browsing history
 
 Exit criteria: all high-severity findings closed, every visible feature has a
 verified backend path and appropriate state handling, and the practicing-lawyer
