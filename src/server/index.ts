@@ -11,6 +11,8 @@ import { TokenStore } from "./token-store.js";
 import { PasswordStore } from "./password-store.js";
 import { LegalAiConfigStore } from "./ai-config-store.js";
 import { LegalAiClient } from "./legal-ai.js";
+import { TypeSafeConfigStore } from "./typesafe-config-store.js";
+import { TypeSafeDecisionService } from "./typesafe-decision-service.js";
 
 validateConfig();
 
@@ -23,6 +25,14 @@ const database = new AppDatabase(join(config.dataDir, "courtlistener-console.sql
 const passwordStore = new PasswordStore(join(config.dataDir, "administrator-password.hash"), config.passwordHash);
 const aiConfigStore = new LegalAiConfigStore(join(config.dataDir, "legal-ai-config.enc"), config.credentialKey);
 const legalAi = new LegalAiClient(aiConfigStore, config.aiRequestTimeoutMs);
+const typeSafeConfigStore = new TypeSafeConfigStore(
+  join(config.dataDir, "typesafe-config.enc"),
+  config.credentialKey,
+  config.bootstrapTypeSafeKey
+    ? { apiKey: config.bootstrapTypeSafeKey, model: config.typeSafeModel, mode: config.typeSafeMode as "off" | "evaluation" | "shadow" | "active" }
+    : null,
+);
+const typeSafe = new TypeSafeDecisionService(typeSafeConfigStore, database, config.typeSafeRequestTimeoutMs);
 const activePasswordHash = await passwordStore.load();
 const security = new SecurityManager({
   passwordHash: activePasswordHash,
@@ -36,7 +46,18 @@ const mcp = new CourtListenerMcpClient({
   getToken: () => tokenStore.get(),
 });
 
-const app = createApp({ config, security, tokenStore, mcp, db: database, passwordStore, aiConfigStore, legalAi });
+const app = createApp({
+  config,
+  security,
+  tokenStore,
+  mcp,
+  db: database,
+  passwordStore,
+  aiConfigStore,
+  legalAi,
+  typeSafeConfigStore,
+  typeSafe,
+});
 const server = config.tlsEnabled
   ? createHttpsServer(
       {

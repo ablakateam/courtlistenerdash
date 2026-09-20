@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { ActivityRecord, CaseAnalysis, SavedResearch } from "../shared/types.js";
+import type { ActivityRecord, CaseAnalysis, JevDecisionLens, SavedResearch } from "../shared/types.js";
 
 export interface StoredAnalysisState {
   clusterId: number;
@@ -63,6 +63,25 @@ export class AppDatabase {
         model TEXT,
         updated_at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS typesafe_decisions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        query_hash TEXT NOT NULL,
+        source_id TEXT NOT NULL,
+        source_hash TEXT NOT NULL,
+        schema_version TEXT NOT NULL,
+        model_version TEXT NOT NULL,
+        original_rank INTEGER NOT NULL,
+        assisted_rank INTEGER NOT NULL,
+        result_json TEXT NOT NULL,
+        evidence_excerpt TEXT NOT NULL,
+        duration_ms INTEGER NOT NULL,
+        input_tokens INTEGER NOT NULL,
+        estimated_cost_usd REAL NOT NULL,
+        created_at TEXT NOT NULL,
+        UNIQUE(query_hash, source_hash, schema_version, model_version)
+      );
+      CREATE INDEX IF NOT EXISTS idx_typesafe_decisions_created
+        ON typesafe_decisions(created_at DESC);
     `);
     this.db.prepare(
       "UPDATE case_analysis SET status='error', error='Analysis was interrupted by a service restart. Start it again.', stage='Interrupted', updated_at=? WHERE status IN ('queued','running')",
@@ -195,6 +214,96 @@ export class AppDatabase {
     if (!row) return null;
     const { resultJson, ...rest } = row;
     return { ...rest, analysis: resultJson ? JSON.parse(resultJson) as CaseAnalysis : null };
+  }
+
+  getTypeSafeDecision(
+    queryHash: string,
+    sourceHash: string,
+    schemaVersion: string,
+    modelVersion: string,
+  ): JevDecisionLens | null {
+    const row = this.db.prepare(`
+      SELECT result_json AS resultJson
+      FROM typesafe_decisions
+      WHERE query_hash=? AND source_hash=? AND schema_version=? AND model_version=?
+    `).get(queryHash, sourceHash, schemaVersion, modelVersion) as { resultJson: string } | undefined;
+    return row ? JSON.parse(row.resultJson) as JevDecisionLens : null;
+  }
+
+  recordTypeSafeDecision(input: {
+    queryHash: string;
+    sourceId: string;
+    sourceHash: string;
+    modelVersion: string;
+    lens: JevDecisionLens;
+  }): void {
+    this.db.prepare(`
+      INSERT INTO typesafe_decisions(
+        query_hash,source_id,source_hash,schema_version,model_version,
+        original_rank,assisted_rank,result_json,evidence_excerpt,
+        duration_ms,input_tokens,estimated_cost_usd,created_at
+      ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
+      ON CONFLICT(query_hash,source_hash,schema_version,model_version) DO UPDATE SET
+        original_rank=excluded.original_rank,
+        assisted_rank=excluded.assisted_rank,
+        result_json=excluded.result_json,
+        evidence_excerpt=excluded.evidence_excerpt,
+        duration_ms=excluded.duration_ms,
+        input_tokens=excluded.input_tokens,
+        estimated_cost_usd=excluded.estimated_cost_usd,
+        created_at=excluded.created_at
+    `).run(
+      input.queryHash,
+      input.sourceId.slice(0, 200),
+      input.sourceHash,
+      input.lens.schemaVersion,
+      input.modelVersion,
+      input.lens.originalRank,
+      input.lens.assistedRank,
+      JSON.stringify(input.lens),
+      input.lens.evidenceExcerpt.slice(0, 1_500),
+      input.lens.durationMs ?? 0,
+      input.lens.inputTokens,
+      input.lens.estimatedCostUsd,
+      new Date().toISOString(),
+    );
+  }
+
+  typeSafeUsage(): {
+    requests: number;
+    inputTokens: number;
+    estimatedCostUsd: number;
+    averageLatencyMs: number | null;
+  } {
+    const row = this.db.prepare(`
+      SELECT COUNT(*) AS requests,
+             COALESCE(SUM(input_tokens),0) AS inputTokens,
+             COALESCE(SUM(estimated_cost_usd),0) AS estimatedCostUsd,
+             AVG(duration_ms) AS averageLatencyMs
+      FROM typesafe_decisions
+    `).get() as {
+      requests: number;
+      inputTokens: number;
+      estimatedCostUsd: number;
+      averageLatencyMs: number | null;
+    };
+    return row;
+  }
+
+  recentTypeSafeDecisions(limit = 50): unknown[] {
+    return this.db.prepare(`
+      SELECT id,source_id AS sourceId,schema_version AS schemaVersion,
+             model_version AS modelVersion,original_rank AS originalRank,
+             assisted_rank AS assistedRank,duration_ms AS durationMs,
+             input_tokens AS inputTokens,estimated_cost_usd AS estimatedCostUsd,
+             result_json AS resultJson,created_at AS createdAt
+      FROM typesafe_decisions ORDER BY id DESC LIMIT ?
+    `).all(Math.max(1, Math.min(limit, 200))).map((row) => {
+      const item = row as Record<string, unknown> & { resultJson: string };
+      const { resultJson, ...metadata } = item;
+      const lens = JSON.parse(resultJson) as JevDecisionLens;
+      return { ...metadata, relevanceBand: lens.relevanceBand, overallProbability: lens.overallProbability };
+    });
   }
 
   close(): void {

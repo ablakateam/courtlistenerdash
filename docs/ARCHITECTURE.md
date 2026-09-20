@@ -21,6 +21,22 @@ legal-AI provider is a separate backend connection and never receives the
 CourtListener credential.
 
 ```text
+CourtListener semantic opinion results
+  → independent Jev decision service
+    → versioned typed relevance schema
+      → encrypted-key provider call + bounded cache/audit store
+        → shadow preview or experimental reranking
+```
+
+Jev receives only a research question, explicit intent, public CourtListener
+metadata, and a bounded matched opinion passage. It does not generate legal
+authority or prose. Its API key is encrypted separately, and provider failure
+preserves the original CourtListener results. Decision records are keyed by
+query, source-text hash, schema version, and pinned model so a taxonomy or
+model change cannot silently reinterpret old results. See
+[TypeSafe Jev legal-decision architecture](TYPESAFE_JEV_ARCHITECTURE.md).
+
+```text
 Authenticated browser page
   → ephemeral live index of visible text + safe action labels
     → explicit assistant question
@@ -73,9 +89,9 @@ connected account’s baseline rate.
 
 ## Persistence
 
-The data directory contains encrypted CourtListener and AI-provider
+The data directory contains encrypted CourtListener, TypeSafe, and AI-provider
 configuration, the administrator password hash, saved research, activity
-history, and cached case analyses. Deployment secrets are supplied through
+history, cached Jev decisions, and cached case analyses. Deployment secrets are supplied through
 environment variables or mounted secret files. None belong in Git.
 
 ## Trust boundaries
@@ -84,6 +100,10 @@ environment variables or mounted secret files. None belong in Git.
 - CourtListener search snippets are research leads, not holdings.
 - AI analysis is optional and fails closed when it cannot cite a retrieved
   source paragraph.
+- Jev probabilities are versioned model inferences, not source facts or
+  percentages of legal correctness. Search remains usable without Jev, and
+  active behavior requires a pinned model plus an application-specific
+  attorney-reviewed evaluation.
 - RECAP coverage is useful but incomplete; it is not the same as direct PACER
   access.
 - Financial-disclosure records are presented factually without inferring a

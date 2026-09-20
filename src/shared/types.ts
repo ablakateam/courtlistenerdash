@@ -37,6 +37,60 @@ export interface ConnectionStatus {
   lanUrls: string[];
   version: string;
   legalAi?: LegalAiStatus;
+  typeSafe?: TypeSafeStatus;
+}
+
+export type TypeSafeMode = "off" | "evaluation" | "shadow" | "active";
+
+export interface TypeSafeModelOption {
+  name: string;
+  description: string;
+  releaseDate: string;
+}
+
+export interface TypeSafeStatus {
+  configured: boolean;
+  available: boolean;
+  mode: TypeSafeMode;
+  model: string | null;
+  actualModel: string | null;
+  endpoint: "https://api.typesafe.ai";
+  lastCheckedAt: string | null;
+  lastSuccessfulDecisionAt: string | null;
+  lastError: string | null;
+  models: TypeSafeModelOption[];
+  usage: {
+    requests: number;
+    inputTokens: number;
+    estimatedCostUsd: number;
+    averageLatencyMs: number | null;
+    cacheHits: number;
+  };
+}
+
+export interface JevSignal {
+  key: "overall" | "legal_issue" | "facts" | "procedure" | "direct_answer" | "distinguish_limit";
+  label: string;
+  probability: number;
+  kind: "model_inference";
+}
+
+export interface JevDecisionLens {
+  status: "not_configured" | "off" | "shadow" | "active" | "unavailable" | "complete";
+  mode: TypeSafeMode;
+  schemaVersion: "search_relevance_noul_v1";
+  modelVersion: string | null;
+  originalRank: number;
+  assistedRank: number;
+  relevanceBand: "Directly responsive" | "Materially relevant" | "Potentially useful" | "Topical only" | "Uncertain";
+  overallProbability: number;
+  signals: JevSignal[];
+  evidenceExcerpt: string;
+  sourceHash: string;
+  durationMs: number | null;
+  inputTokens: number;
+  estimatedCostUsd: number;
+  experimental: true;
 }
 
 export type LegalAiProvider = "ollama" | "openai" | "anthropic";
@@ -215,6 +269,8 @@ export interface SearchRequest {
   judge?: string;
   citation?: string;
   numResults?: number;
+  researchQuestion?: string;
+  researchIntent?: SemanticResearchIntent;
 }
 
 export interface ConfirmationChallenge {

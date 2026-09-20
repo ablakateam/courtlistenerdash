@@ -29,6 +29,8 @@ const { TokenStore } = await import("../dist-server/server/token-store.js");
 const { PasswordStore } = await import("../dist-server/server/password-store.js");
 const { LegalAiConfigStore } = await import("../dist-server/server/ai-config-store.js");
 const { LegalAiClient } = await import("../dist-server/server/legal-ai.js");
+const { TypeSafeConfigStore } = await import("../dist-server/server/typesafe-config-store.js");
+const { TypeSafeDecisionService } = await import("../dist-server/server/typesafe-decision-service.js");
 
 validateConfig();
 const port = Math.max(1024, Number(process.env.COURTLISTENER_REVIEW_PORT) || 8890);
@@ -63,6 +65,8 @@ const database = new AppDatabase(join(reviewDirectory, "review.sqlite3"));
 const passwordStore = new PasswordStore(join(reviewDirectory, "review-password.hash"), passwordHash);
 const aiConfigStore = new LegalAiConfigStore(join(reviewDirectory, "review-ai.enc"), config.credentialKey);
 const legalAi = new LegalAiClient(aiConfigStore, reviewConfig.aiRequestTimeoutMs);
+const typeSafeConfigStore = new TypeSafeConfigStore(join(reviewDirectory, "review-typesafe.enc"), config.credentialKey);
+const typeSafe = new TypeSafeDecisionService(typeSafeConfigStore, database, reviewConfig.typeSafeRequestTimeoutMs);
 const security = new SecurityManager({
   passwordHash,
   sessionSecret: reviewConfig.sessionSecret,
@@ -83,6 +87,8 @@ const app = createApp({
   passwordStore,
   aiConfigStore,
   legalAi,
+  typeSafeConfigStore,
+  typeSafe,
 });
 const server = createServer(app);
 

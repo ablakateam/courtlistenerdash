@@ -67,6 +67,14 @@ Status: **In progress**
 - [x] Add an ephemeral live-page retrieval index for rendered text, visible
       controls, trusted platform navigation, and question-focused context
       selection without autonomous UI actions or persisted browsing history
+- [x] Add an independent TypeSafe Jev decision service, encrypted settings,
+      pinned-model protection, shadow/active modes, semantic relevance lens,
+      Decision Lab, provenance store, cost/latency telemetry, and fail-open
+      CourtListener behavior
+- [x] Add a versioned offline evaluation harness for relevance, ranking,
+      calibration, latency, and cost
+- [ ] Build and adjudicate the first attorney-reviewed CourtListener relevance
+      dataset before recommending active Jev reranking
 
 Exit criteria: all high-severity findings closed, every visible feature has a
 verified backend path and appropriate state handling, and the practicing-lawyer
@@ -93,3 +101,8 @@ Status: **Planned**
 - Exportable source-linked research memoranda
 - Citation-network filtering and larger graph navigation
 - Additional long-document analysis evaluations and model-quality benchmarks
+- Evaluated Jev Opinion Navigator for holding, facts, rule, standard, analysis,
+  disposition, concurrence, and dissent passages
+- Evaluated summary-claim support checker and assistant-context gate
+- Hybrid similar-case ranking using semantic retrieval plus versioned legal
+  signals, after controlled ablation testing

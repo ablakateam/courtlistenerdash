@@ -269,3 +269,38 @@ refresh it as the research view changes, and retrieve only the most relevant
 passages for each question. Keep typed values and protected workspaces outside
 the index, use a reviewed server-side map for platform navigation, and require
 the lawyer to activate every suggested control.
+
+## 2026-09-20 — A probability is useful only with its contract and provenance
+
+A polished confidence display can make an experimental model judgment appear
+more authoritative than it is. A Jev Noul probability answers one precisely
+worded question against one supplied state; it is not a percentage chance that
+a case is “correct,” controlling, or still good law. Changing the question,
+passage, taxonomy, or model changes the decision contract.
+
+Action: show every probability as model inference beside the CourtListener
+source, keep both original and assisted rank, version schemas and models, retain
+the evaluated excerpt and hash, and select automation thresholds only from an
+attorney-reviewed calibration dataset.
+
+## 2026-09-20 — An optional reranker must fail open without losing results
+
+An intelligence layer can improve ordering but should not become a new single
+point of failure for basic legal research. Evaluating a fixed shortlist also
+creates a subtle truncation risk if unscored candidates are accidentally
+replaced when the result set is rebuilt.
+
+Action: preserve the complete CourtListener response, evaluate a bounded head,
+append the untouched tail, and return the original order with a clear
+unavailable state on authentication, timeout, rate-limit, or provider errors.
+
+## 2026-09-20 — Vendor legal benchmarks are hypotheses, not acceptance proof
+
+TypeSafe's CLERC reranking example demonstrates a relevant architectural
+pattern, but its small vendor-authored query set, retrieval method, and question
+are not the same as this product's users, CourtListener candidates, or error
+costs.
+
+Action: reproduce value on a frozen, attorney-reviewed CourtListener dataset;
+measure ranking, recall, calibration, latency, cost, adversarial behavior, and
+important jurisdiction/practice slices before recommending active use.

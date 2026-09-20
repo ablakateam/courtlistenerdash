@@ -26,6 +26,9 @@ import { LegalAiConfigStore, normalizeLegalAiBaseUrl, normalizeLegalAiConfig } f
 import { LegalAiClient } from "./legal-ai.js";
 import { analyzeOpinion, answerOpinionQuestion } from "./legal-analysis.js";
 import { answerPageAssistantQuestion } from "./page-assistant.js";
+import { TypeSafeConfigStore, normalizeTypeSafeConfig } from "./typesafe-config-store.js";
+import { TypeSafeDecisionService } from "./typesafe-decision-service.js";
+import { SEARCH_RELEVANCE_SCHEMA_VERSION, TYPESAFE_SCHEMA_REGISTRY } from "./typesafe-schema-registry.js";
 
 interface AppDependencies {
   config: AppConfig;
@@ -36,6 +39,8 @@ interface AppDependencies {
   passwordStore: PasswordStore;
   aiConfigStore: LegalAiConfigStore;
   legalAi: LegalAiClient;
+  typeSafeConfigStore: TypeSafeConfigStore;
+  typeSafe: TypeSafeDecisionService;
 }
 
 interface StoredChallenge extends ConfirmationChallenge {
@@ -253,7 +258,7 @@ function usageSummary(value: unknown): ApiUsageSummary {
 }
 
 export function createApp(deps: AppDependencies): Express {
-  const { config, security, tokenStore, mcp, db, passwordStore, aiConfigStore, legalAi } = deps;
+  const { config, security, tokenStore, mcp, db, passwordStore, aiConfigStore, legalAi, typeSafeConfigStore, typeSafe } = deps;
   const app = express();
   const challenges = new Map<string, StoredChallenge>();
   const requestBuckets = new Map<string, { count: number; resetAt: number }>();
@@ -393,6 +398,7 @@ export function createApp(deps: AppDependencies): Express {
   app.get("/api/status", async (_req, res) => {
     const configured = await tokenStore.isConfigured();
     const legalAiStatus = await legalAi.status();
+    const typeSafeStatus = await typeSafe.status();
     let sourceRevision: string | null = null;
     let upstreamHealthy = false;
     try {
@@ -422,6 +428,7 @@ export function createApp(deps: AppDependencies): Express {
       version: config.version,
       tls: config.tlsEnabled,
       legalAi: legalAiStatus,
+      typeSafe: typeSafeStatus,
     });
   });
 
@@ -525,6 +532,61 @@ export function createApp(deps: AppDependencies): Express {
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
     }
+  });
+
+  app.put("/api/connections/typesafe", security.requireCsrf, async (req, res) => {
+    let submittedKey = "";
+    try {
+      const body = objectBody(req.body);
+      const existing = await typeSafeConfigStore.get();
+      const requestedKey = typeof body.apiKey === "string" ? body.apiKey.trim() : "";
+      submittedKey = requestedKey;
+      const candidate = normalizeTypeSafeConfig({
+        apiKey: requestedKey || existing?.apiKey || "",
+        model: body.model,
+        mode: body.mode,
+      });
+      const validation = await typeSafe.validate(candidate);
+      await typeSafeConfigStore.set(candidate);
+      db.recordActivity(
+        "connection",
+        "typesafe-update",
+        `Jev ${validation.actualModel} validated in ${candidate.mode} mode`,
+        "success",
+        null,
+      );
+      res.json(await typeSafe.status());
+    } catch (error) {
+      const rawMessage = error instanceof Error ? error.message : String(error);
+      const message = redactSecrets(submittedKey ? rawMessage.replaceAll(submittedKey, "[REDACTED]") : rawMessage);
+      db.recordActivity("connection", "typesafe-update", "Jev connection validation failed", "error", null);
+      res.status(400).json({ error: message });
+    }
+  });
+
+  app.delete("/api/connections/typesafe", security.requireCsrf, async (req, res) => {
+    try {
+      if (objectBody(req.body).confirm !== "REMOVE") throw new Error("Type REMOVE to clear the Jev connection");
+      await typeSafeConfigStore.clear();
+      db.recordActivity("connection", "typesafe-remove", "Jev connection removed", "success", null);
+      res.json(await typeSafe.status());
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.get("/api/typesafe/lab", async (_req, res) => {
+    const definition = TYPESAFE_SCHEMA_REGISTRY.find((entry) => entry.version === SEARCH_RELEVANCE_SCHEMA_VERSION);
+    res.json({
+      status: await typeSafe.status(),
+      schema: {
+        id: SEARCH_RELEVANCE_SCHEMA_VERSION,
+        state: "experimental",
+        sourceBoundary: definition?.sourceBoundary ?? "Public CourtListener opinion passages only.",
+        outputs: ["overall", "legal_issue", "facts", "procedure", "direct_answer", "distinguish_limit"],
+      },
+      recent: db.recentTypeSafeDecisions(50),
+    });
   });
 
   app.post("/api/assistant/ask", security.requireCsrf, async (req, res) => {
@@ -702,10 +764,19 @@ export function createApp(deps: AppDependencies): Express {
 
   app.post("/api/search", security.requireCsrf, async (req, res) => {
     try {
-      const args = searchArguments(objectBody(req.body) as unknown as SearchRequest);
+      const body = objectBody(req.body) as unknown as SearchRequest;
+      const args = searchArguments(body);
       const result = await mcp.call("search", args);
       db.recordActivity("research", args.semantic ? "semantic-search" : "keyword-search", String(args.q ?? args.citation), "success", result.durationMs);
-      res.json(result);
+      if (args.semantic) {
+        const researchQuestion = typeof body.researchQuestion === "string" && body.researchQuestion.trim()
+          ? body.researchQuestion.trim().slice(0, 3_000)
+          : String(args.q ?? "");
+        const enhanced = await typeSafe.enhanceSemanticResults(result.data, researchQuestion, String(body.researchIntent ?? "issue"));
+        res.json({ ...result, data: enhanced });
+      } else {
+        res.json(result);
+      }
     } catch (error) {
       sendCourtListenerError(res, error);
     }

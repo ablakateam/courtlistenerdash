@@ -57,6 +57,7 @@ import {
 import DOMPurify from "dompurify";
 import {
   type FormEvent,
+  type CSSProperties,
   type ReactNode,
   createContext,
   useCallback,
@@ -89,12 +90,14 @@ import type {
   SavedResearch,
   GroundedAnswer,
   GroundedClaim,
+  JevDecisionLens,
   LegalAiModelCatalog,
   LegalAiStatus,
   SemanticResearchIntent,
   SourcePassage,
   ToolCoverageRow,
   ToolResult,
+  TypeSafeStatus,
 } from "../shared/types";
 import {
   courtListenerAudioSource,
@@ -416,6 +419,7 @@ const navGroups = [
     links: [
       ["/mcp", "MCP Console", Bot],
       ["/api-explorer", "API Explorer", Code2],
+      ["/decision-lab", "Jev Decision Lab", Activity],
       ["/settings", "Settings", Settings],
     ],
   },
@@ -658,6 +662,8 @@ function ResearchForm({
         filedBefore,
         citation: exactCitation,
         numResults: 20,
+        researchQuestion: semantic ? query.trim() : undefined,
+        researchIntent: semantic ? intent : undefined,
       });
       onResults(response.data, query.trim() || exactCitation, semantic ? "o" : type, semantic ? {
         intent,
@@ -708,6 +714,25 @@ function ResearchForm({
   );
 }
 
+function JevDecisionPanel({ value }: { value: unknown }) {
+  const lens = asObject(value) as unknown as JevDecisionLens;
+  if (!lens.status) return null;
+  if (lens.status === "unavailable") {
+    return <div className="jev-lens unavailable"><AlertTriangle size={17} /><div><strong>Jev Decision Lens unavailable</strong><span>CourtListener’s original ranking is preserved. No model inference was used to order this result.</span></div></div>;
+  }
+  const probability = Math.max(0, Math.min(1, Number(lens.overallProbability) || 0));
+  const signals = Array.isArray(lens.signals) ? lens.signals.filter((signal) => signal.key !== "overall") : [];
+  return <section className="jev-lens" aria-label="Jev Decision Lens">
+    <header>
+      <div className="jev-orbit" style={{ "--jev-probability": `${Math.round(probability * 100) * 3.6}deg` } as CSSProperties}><Sparkles size={16} /><span>{Math.round(probability * 100)}</span></div>
+      <div><span className="eyebrow">Jev Decision Lens · experimental</span><strong>{lens.relevanceBand}</strong><small>{lens.mode === "shadow" ? `CourtListener rank ${lens.originalRank} · Jev preview ${lens.assistedRank}` : `Jev-assisted rank ${lens.assistedRank} · CourtListener rank ${lens.originalRank}`}</small></div>
+      <span className={`jev-mode ${lens.mode}`}>{lens.mode === "shadow" ? "Shadow preview" : "Assisted rank"}</span>
+    </header>
+    <div className="jev-signal-grid">{signals.map((signal) => <div key={signal.key}><span>{signal.label}</span><div><i style={{ width: `${Math.round(Math.max(0, Math.min(1, signal.probability)) * 100)}%` }} /></div><strong>{Math.round(signal.probability * 100)}%</strong></div>)}</div>
+    <details className="jev-provenance"><summary><ShieldCheck size={14} />Inspect decision provenance</summary><div className="jev-provenance-flow"><span><small>Source</small>CourtListener passage</span><ChevronRight size={14} /><span><small>Typed schema</small>{lens.schemaVersion}</span><ChevronRight size={14} /><span><small>Model</small>{lens.modelVersion || "Jev"}</span></div><p><strong>Evidence evaluated:</strong> {lens.evidenceExcerpt || "The CourtListener result passage shown below."}</p><p className="muted">Percentages are model probabilities for narrow questions, not source facts or guarantees of legal relevance. Open the full authority before relying on it.</p></details>
+  </section>;
+}
+
 function ResultCard({ item, type, query, semanticSession, onSave }: { item: JsonObject; type: string; query: string; semanticSession?: SemanticSession; onSave?: () => void }) {
   const title = first(item.caseNameFull, item.caseName, item.case_name_full, item.case_name, item.name_full, item.name, item.description, item.docketNumber, item.docket_number, "CourtListener result");
   const courtObject = asObject(item.court);
@@ -744,6 +769,7 @@ function ResultCard({ item, type, query, semanticSession, onSave }: { item: Json
         {judge && <span><Gavel size={14} />{judge}</span>}
       </div>
       {semanticSession && <div className="semantic-relevance"><Sparkles size={15} /><div><strong>Why this authority is in the result set</strong><span>CourtListener ranked it as conceptually relevant to your <em>{semanticSession.intentLabel.toLowerCase()}</em> objective. The source passage below comes from the CourtListener opinion index and is not AI-generated.</span></div></div>}
+      {semanticSession && Boolean(item._jev) && <JevDecisionPanel value={item._jev} />}
       {posture && <p className="result-context"><strong>Context:</strong> {posture.slice(0, 360)}</p>}
       {snippet && <div className={`snippet ${semanticSession ? "matched-passage" : ""}`}>{semanticSession && <strong><Quote size={14} />Matched opinion passage</strong>}<p><HighlightText text={snippet.slice(0, 900)} query={query} /></p></div>}
       {type === "oa" && <div className="audio-availability"><AudioLines size={15} /><span>Open the oral-argument record to load its secure CourtListener stream and transcript.</span></div>}
@@ -815,9 +841,12 @@ function SearchResults({ data, type, query, semanticSession }: { data: unknown; 
       notify({ kind: "error", message: reason instanceof Error ? reason.message : String(reason) });
     }
   }
+  const jevLenses = items.map((item) => item._jev ? asObject(item._jev) as unknown as JevDecisionLens : null).filter((item): item is JevDecisionLens => Boolean(item?.status));
+  const jevAvailable = jevLenses.find((item) => item.status !== "unavailable");
   return (
     <section className="results-section">
       {semanticSession && <div className="research-intent-strip"><div><span className="eyebrow">Research question</span><strong>{query}</strong></div><ChevronRight size={18} /><div><span className="eyebrow">Search intent</span><strong>{semanticSession.intentLabel}</strong><small>{semanticSession.intentDescription}</small></div><ChevronRight size={18} /><div><span className="eyebrow">Grounding</span><strong>CourtListener opinions only</strong><small>{semanticSession.court ? `Court: ${semanticSession.court}` : "All available courts"}</small></div></div>}
+      {semanticSession && jevAvailable && <div className="jev-research-map"><div><Sparkles size={19} /><span><small>Jev Research Map</small><strong>Jev {jevAvailable.mode === "shadow" ? "shadow preview" : "assisted ranking"}</strong></span></div><ChevronRight size={16} /><div><small>Candidates analyzed</small><strong>{jevLenses.length}</strong></div><ChevronRight size={16} /><div><small>Typed schema</small><strong>{jevAvailable.schemaVersion}</strong></div><ChevronRight size={16} /><div><small>Source boundary</small><strong>Public opinions</strong></div></div>}
       <div className="results-heading">
         <div><span className="eyebrow">CourtListener authorities</span><h2>{first(object.count, items.length)} results for “{query}”</h2><p>{semanticSession ? "Ranked by CourtListener semantic relevance. Open the full authority before relying on a matched passage." : "Review the court, date, citation, and excerpt before opening the full record."}</p></div>
         <div className="results-actions"><button className="secondary compact" onClick={() => void saveSearch()}><Bookmark size={15} />Save search</button>{first(object.query_id) && <details className="technical-details"><summary>Search details</summary><code>Query {first(object.query_id)}</code></details>}</div>
@@ -1953,6 +1982,40 @@ function ApiExplorer() {
   );
 }
 
+function DecisionLab() {
+  const { data, error, loading, reload } = useLoad(() => api<{
+    status: TypeSafeStatus;
+    schema: { id: string; state: string; sourceBoundary: string; outputs: string[] };
+    recent: JsonObject[];
+  }>("/api/typesafe/lab"));
+  if (loading) return <Loading label="Opening Jev Decision Lab…" />;
+  if (error || !data) return <EmptyState icon={<AlertTriangle />} title="Decision Lab unavailable" detail={error || "No Jev diagnostics returned."} action={<button className="secondary" onClick={reload}><RefreshCw size={15} />Try again</button>} />;
+  const { status, schema, recent } = data;
+  const averageProbability = recent.length
+    ? recent.reduce((sum, row) => sum + Number(row.overallProbability || 0), 0) / recent.length
+    : 0;
+  return <>
+    <PageHeader eyebrow="Structured legal intelligence" title="Jev Decision Lab" description="Inspect the typed decisions beneath semantic research. This workspace keeps model inferences, source evidence, operating mode, cost, and validation status visible." action={<button className="secondary" onClick={reload}><RefreshCw size={16} />Refresh</button>} />
+    <section className="jev-lab-hero">
+      <div className="jev-lab-mark"><Activity size={32} /></div>
+      <div><span className="eyebrow">TypeSafe AI · System One</span><h2>{status.configured ? status.actualModel || status.model : "Jev is not connected"}</h2><p>{status.configured ? `${humanize(status.mode)} mode · ${schema.sourceBoundary}` : "Add a TypeSafe API key in Settings to begin evaluation."}</p></div>
+      <StatusPill status={status.available ? "Connected" : status.configured ? "Configured" : "Not configured"} />
+    </section>
+    <div className="jev-metric-grid">
+      <article><small>Stored decisions</small><strong>{status.usage.requests.toLocaleString()}</strong><span>Versioned and auditable</span></article>
+      <article><small>Input tokens</small><strong>{status.usage.inputTokens.toLocaleString()}</strong><span>Public opinion passages</span></article>
+      <article><small>Estimated cost</small><strong>${status.usage.estimatedCostUsd.toFixed(4)}</strong><span>Current direct rate estimate</span></article>
+      <article><small>Average latency</small><strong>{status.usage.averageLatencyMs === null ? "—" : `${Math.round(status.usage.averageLatencyMs)} ms`}</strong><span>Recorded decision calls</span></article>
+      <article className="probability-card"><div className="jev-orbit large" style={{ "--jev-probability": `${Math.round(averageProbability * 100) * 3.6}deg` } as CSSProperties}><Sparkles size={20} /><span>{Math.round(averageProbability * 100)}</span></div><div><small>Mean relevance probability</small><strong>{recent.length ? `${Math.round(averageProbability * 100)}%` : "No sample"}</strong><span>Descriptive only; not an accuracy measure</span></div></article>
+    </div>
+    <div className="two-column jev-lab-columns">
+      <section className="panel"><div className="panel-heading"><div><span className="eyebrow">Active contract</span><h2>{schema.id}</h2></div><StatusPill status={schema.state} /></div><div className="schema-flow"><span>CourtListener passage</span><ChevronRight size={15} /><span>Atomic questions</span><ChevronRight size={15} /><span>Probabilities</span><ChevronRight size={15} /><span>UI decision</span></div><div className="signal-catalog">{schema.outputs.map((output) => <span key={output}><CircleCheckBig size={14} />{humanize(output)}</span>)}</div><div className="banner neutral"><ShieldCheck size={16} />This schema is experimental until the attorney-reviewed evaluation gate passes. Confidence and probability do not convert an inference into a source fact.</div></section>
+      <section className="panel"><div className="panel-heading"><div><span className="eyebrow">Evaluation readiness</span><h2>Production gate</h2></div><ListChecks size={19} /></div><div className="gate-list"><div className="done"><Check size={15} /><span><strong>Architecture</strong>Isolated service, encrypted key, source provenance</span></div><div><Clock3 size={15} /><span><strong>Gold dataset</strong>Attorney-reviewed CourtListener relevance judgments required</span></div><div><Clock3 size={15} /><span><strong>Calibration</strong>Thresholds remain unapproved until measured</span></div><div><Clock3 size={15} /><span><strong>Promotion</strong>Shadow should precede active ranking</span></div></div></section>
+    </div>
+    <section className="panel"><div className="panel-heading"><div><span className="eyebrow">Decision audit</span><h2>Recent Jev evaluations</h2></div><Activity size={19} /></div>{recent.length ? <div className="table-wrap"><table><thead><tr><th>Source</th><th>Relevance</th><th>CourtListener</th><th>Jev preview</th><th>Latency</th><th>Cost</th><th>When</th></tr></thead><tbody>{recent.map((row) => <tr key={String(row.id)}><td>{first(row.sourceId)}</td><td><strong>{Math.round(Number(row.overallProbability) * 100)}%</strong><br /><small>{first(row.relevanceBand)}</small></td><td>#{first(row.originalRank)}</td><td>#{first(row.assistedRank)}</td><td>{first(row.durationMs)} ms</td><td>${Number(row.estimatedCostUsd || 0).toFixed(6)}</td><td>{formatDate(row.createdAt)}</td></tr>)}</tbody></table></div> : <EmptyState icon={<Activity />} title="No decisions recorded" detail="Run a semantic search in shadow or active mode to populate this audit." />}</section>
+  </>;
+}
+
 function SettingsPage() {
   const notify = useNotice();
   const { data: status, error, loading, reload } = useLoad(() => api<ConnectionStatus & { tls: boolean }>("/api/status"));
@@ -1993,10 +2056,60 @@ function SettingsPage() {
         </form>
       </section>
       <LegalAiSettings status={status?.legalAi ?? null} reload={reload} />
+      <TypeSafeSettings status={status?.typeSafe ?? null} reload={reload} />
       <PasswordSettings />
       <section className="panel"><div className="panel-heading"><div><span className="eyebrow">Private-network deployment</span><h2>Service access</h2></div><Network size={19} /></div><div className="url-list">{status?.lanUrls.map((url) => <code key={url}>{url}</code>) || <span>Private-network URLs will appear after the service starts.</span>}</div><p className="muted">Use host firewall rules, dashboard authentication, and trusted HTTPS certificates to limit access to authorized users.</p></section>
     </>
   );
+}
+
+function TypeSafeSettings({ status, reload }: { status: TypeSafeStatus | null; reload: () => void }) {
+  const notify = useNotice();
+  const [apiKey, setApiKey] = useState("");
+  const [show, setShow] = useState(false);
+  const [model, setModel] = useState(status?.model ?? "jev-1.13.0");
+  const [mode, setMode] = useState<TypeSafeStatus["mode"]>(status?.mode === "off" ? "shadow" : status?.mode ?? "shadow");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (status?.model) setModel(status.model);
+    if (status?.configured) setMode(status.mode);
+  }, [status?.configured, status?.mode, status?.model]);
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    try {
+      await put<TypeSafeStatus>("/api/connections/typesafe", { apiKey, model, mode });
+      setApiKey(""); setShow(false); reload();
+      notify({ kind: "success", message: "Jev validated and connected" });
+    } catch (reason) {
+      notify({ kind: "error", message: reason instanceof Error ? reason.message : String(reason) });
+    } finally { setBusy(false); }
+  }
+  async function remove() {
+    if (!window.confirm("Remove the Jev connection? Stored decision audit records will remain, but no new decisions will run.")) return;
+    setBusy(true);
+    try {
+      await del("/api/connections/typesafe", { confirm: "REMOVE" }); reload();
+      notify({ kind: "success", message: "Jev connection removed" });
+    } catch (reason) { notify({ kind: "error", message: reason instanceof Error ? reason.message : String(reason) }); }
+    finally { setBusy(false); }
+  }
+  const statusLabel = status?.configured ? status.available ? "Connected" : status.lastError ? "Needs attention" : "Configured" : "Not configured";
+  const knownModels = status?.models ?? [];
+  const usage = status?.usage;
+  return <section className="connection-panel panel typesafe-settings" id="jev-intelligence">
+    <div className="connection-hero jev-connection-hero"><div className="connection-logo jev-logo"><Activity size={25} /></div><div><span className="eyebrow">Typed legal decision layer</span><h2>Jev Intelligence</h2><p>Fast, structured decisions applied only after CourtListener retrieves public legal authority.</p></div><StatusPill status={statusLabel} /></div>
+    <div className="connection-details jev-connection-details"><div><small>Provider</small><strong>TypeSafe AI</strong></div><div><small>Model</small><strong>{status?.actualModel || status?.model || "Not selected"}</strong></div><div><small>Operating mode</small><strong>{humanize(status?.mode || "off")}</strong></div><div><small>Last decision</small><strong>{status?.lastSuccessfulDecisionAt ? formatDate(status.lastSuccessfulDecisionAt) : "Never"}</strong></div></div>
+    {status?.lastError && <div className="banner error"><AlertTriangle size={16} />{status.lastError}</div>}
+    {status?.configured && usage && <div className="jev-usage-strip"><div><small>Stored decisions</small><strong>{usage.requests.toLocaleString()}</strong></div><div><small>Input tokens</small><strong>{usage.inputTokens.toLocaleString()}</strong></div><div><small>Estimated cost</small><strong>${usage.estimatedCostUsd.toFixed(4)}</strong></div><div><small>Average latency</small><strong>{usage.averageLatencyMs === null ? "—" : `${Math.round(usage.averageLatencyMs)} ms`}</strong></div><div><small>Cache hits</small><strong>{usage.cacheHits.toLocaleString()}</strong></div></div>}
+    <form className="typesafe-config-form" onSubmit={save}>
+      <label>Jev model<input list="jev-model-catalog" value={model} onChange={(event) => setModel(event.target.value)} spellCheck={false} /><datalist id="jev-model-catalog">{knownModels.map((entry) => <option key={entry.name} value={entry.name}>{entry.description}</option>)}</datalist><small className="field-note">Production decisions stay pinned to an evaluated version.</small></label>
+      <label>Operating mode<select value={mode} onChange={(event) => setMode(event.target.value as TypeSafeStatus["mode"])}><option value="evaluation">Evaluation only</option><option value="shadow">Shadow preview</option><option value="active">Active experimental ranking</option><option value="off">Off</option></select><small className="field-note">Shadow mode displays Jev’s preview without changing CourtListener order.</small></label>
+      <div className="ai-key-field"><label htmlFor="typesafe-api-key">TypeSafe API key</label><div className="secret-input"><input id="typesafe-api-key" type={show ? "text" : "password"} value={apiKey} onChange={(event) => setApiKey(event.target.value)} autoComplete="off" spellCheck={false} placeholder={status?.configured ? "Leave blank to keep the encrypted key" : "Paste TypeSafe API key"} /><button type="button" className="text-button" onClick={() => setShow((value) => !value)}>{show ? "Hide" : "Show"}</button></div></div>
+      <div className="jev-boundary"><ShieldCheck size={18} /><div><strong>Public-opinion boundary</strong><span>Only the research question, CourtListener metadata, and matched public opinion passage are sent for this feature. Docket filings, uploads, credentials, and private material are excluded. Decisions are model inferences—not legal source facts.</span></div></div>
+      <div className="button-row"><button className="primary jev-connect" disabled={busy || !model.trim() || (!apiKey.trim() && !status?.configured)}>{busy ? <LoaderCircle className="spin" size={16} /> : <Activity size={16} />}{status?.configured ? "Validate and update Jev" : "Validate and connect Jev"}</button>{status?.configured && <><Link className="secondary" to="/decision-lab">Open Decision Lab</Link><button type="button" className="danger" disabled={busy} onClick={() => void remove()}><Trash2 size={16} />Remove Jev connection</button></>}</div>
+    </form>
+  </section>;
 }
 
 function LegalAiSettings({ status, reload }: { status: LegalAiStatus | null; reload: () => void }) {
@@ -2198,6 +2311,7 @@ function AppRoutes() {
     <Route path="/saved" element={<SavedPage />} />
     <Route path="/mcp" element={<McpConsole />} />
     <Route path="/api-explorer" element={<ApiExplorer />} />
+    <Route path="/decision-lab" element={<DecisionLab />} />
     <Route path="/settings" element={<SettingsPage />} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>;

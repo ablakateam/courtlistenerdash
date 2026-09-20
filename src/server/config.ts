@@ -59,7 +59,7 @@ const tlsKeyPath = process.env.COURTLISTENER_TLS_KEY
   : null;
 
 export const config = {
-  version: "1.2.0",
+  version: "1.3.0",
   host: process.env.COURTLISTENER_WEB_HOST || "0.0.0.0",
   port,
   publicPort,
@@ -73,6 +73,9 @@ export const config = {
   credentialKey: secretEnv("COURTLISTENER_CREDENTIAL_KEY"),
   passwordHash: secretEnv("COURTLISTENER_WEB_PASSWORD_HASH"),
   bootstrapToken: secretEnv("COURTLISTENER_API_TOKEN"),
+  bootstrapTypeSafeKey: secretEnv("TYPESAFE_API_KEY"),
+  typeSafeModel: process.env.TYPESAFE_DEFAULT_MODEL || "jev-1.13.0",
+  typeSafeMode: process.env.TYPESAFE_MODE || "off",
   tlsCertPath,
   tlsKeyPath,
   tlsEnabled: Boolean(tlsCertPath && tlsKeyPath),
@@ -88,6 +91,7 @@ export const config = {
   sessionTtlMs: intEnv("COURTLISTENER_SESSION_TTL_MINUTES", 480) * 60_000,
   requestTimeoutMs: intEnv("COURTLISTENER_REQUEST_TIMEOUT_MS", 45_000),
   aiRequestTimeoutMs: intEnv("LEGAL_AI_REQUEST_TIMEOUT_MS", 300_000),
+  typeSafeRequestTimeoutMs: intEnv("TYPESAFE_REQUEST_TIMEOUT_MS", 15_000),
   maxRequestsPerMinute: intEnv("COURTLISTENER_REQUESTS_PER_MINUTE", 90),
   lanUrls: lanUrls(publicPort, Boolean(tlsCertPath && tlsKeyPath)),
 };

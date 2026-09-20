@@ -68,6 +68,14 @@ secrets, append `_FILE` to any of the four sensitive variable names and set it
 to the mounted file path. Never place a CourtListener token in a client-side
 variable. The health-check endpoint is `GET /healthz`.
 
+Optional TypeSafe configuration is normally entered under **Settings → Jev
+Intelligence** so the key is validated before the encrypted configuration is
+saved. Automated deployments may instead supply `TYPESAFE_API_KEY` or
+`TYPESAFE_API_KEY_FILE`, together with a pinned `TYPESAFE_DEFAULT_MODEL` and a
+`TYPESAFE_MODE` of `off`, `evaluation`, `shadow`, or `active`. Start with
+`evaluation` or `shadow`. Active mode rejects moving model aliases. Never use a
+client-exposed environment-variable prefix for the key.
+
 Only set `COURTLISTENER_TRUST_PROXY=true` when exactly one trusted reverse proxy
 is in front of the app and the container port is not directly reachable.
 

@@ -1,0 +1,11 @@
+# Synthetic harness fixture only. These are not legal-quality labels or benchmark evidence.
+{"queryId":"synthetic-1","candidateId":"a","label":3,"score":0.94,"baselineRank":3,"jevRank":1,"latencyMs":100,"estimatedCostUsd":0.00001}
+{"queryId":"synthetic-1","candidateId":"b","label":2,"score":0.82,"baselineRank":2,"jevRank":2,"latencyMs":120,"estimatedCostUsd":0.00001}
+{"queryId":"synthetic-1","candidateId":"c","label":1,"score":0.44,"baselineRank":1,"jevRank":3,"latencyMs":90,"estimatedCostUsd":0.00001}
+{"queryId":"synthetic-1","candidateId":"d","label":0,"score":0.12,"baselineRank":4,"jevRank":4,"latencyMs":105,"estimatedCostUsd":0.00001}
+{"queryId":"synthetic-1","candidateId":"e","label":0,"score":0.06,"baselineRank":5,"jevRank":5,"latencyMs":98,"estimatedCostUsd":0.00001}
+{"queryId":"synthetic-2","candidateId":"f","label":3,"score":0.91,"baselineRank":4,"jevRank":1,"latencyMs":115,"estimatedCostUsd":0.00001}
+{"queryId":"synthetic-2","candidateId":"g","label":2,"score":0.77,"baselineRank":1,"jevRank":2,"latencyMs":125,"estimatedCostUsd":0.00001}
+{"queryId":"synthetic-2","candidateId":"h","label":1,"score":0.49,"baselineRank":2,"jevRank":3,"latencyMs":110,"estimatedCostUsd":0.00001}
+{"queryId":"synthetic-2","candidateId":"i","label":0,"score":0.20,"baselineRank":3,"jevRank":4,"latencyMs":95,"estimatedCostUsd":0.00001}
+{"queryId":"synthetic-2","candidateId":"j","label":0,"score":0.04,"baselineRank":5,"jevRank":5,"latencyMs":102,"estimatedCostUsd":0.00001}

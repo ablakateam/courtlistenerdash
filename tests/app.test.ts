@@ -15,6 +15,8 @@ import { TokenStore } from "../src/server/token-store.js";
 import { PasswordStore } from "../src/server/password-store.js";
 import { LegalAiConfigStore } from "../src/server/ai-config-store.js";
 import { LegalAiClient } from "../src/server/legal-ai.js";
+import { TypeSafeConfigStore } from "../src/server/typesafe-config-store.js";
+import { TypeSafeDecisionService } from "../src/server/typesafe-decision-service.js";
 
 test("authenticated dashboard can validate and store a token without returning it", async () => {
   const directory = join(tmpdir(), `courtlistenerdash-app-${randomBytes(8).toString("hex")}`);
@@ -31,6 +33,9 @@ test("authenticated dashboard can validate and store a token without returning i
   const aiConfigStore = new LegalAiConfigStore(join(directory, "ai.enc"), randomBytes(32).toString("base64"));
   const legalAi = new LegalAiClient(aiConfigStore, 5_000);
   const db = new AppDatabase(join(directory, "app.sqlite3"));
+  const typeSafeConfigStore = new TypeSafeConfigStore(join(directory, "typesafe.enc"), randomBytes(32).toString("base64"));
+  const typeSafe = new TypeSafeDecisionService(typeSafeConfigStore, db, 5_000);
+  typeSafe.validate = async (candidate) => ({ actualModel: candidate.model, models: [] });
   const fakeMcp = {
     async testCredential() { return { toolCount: 19, tools: [] }; },
     async disconnect() {},
@@ -63,7 +68,7 @@ test("authenticated dashboard can validate and store a token without returning i
     maxRequestsPerMinute: 100,
     lanUrls: [],
   } as AppConfig;
-  const app = createApp({ config, security, tokenStore, mcp: fakeMcp, db, passwordStore, aiConfigStore, legalAi });
+  const app = createApp({ config, security, tokenStore, mcp: fakeMcp, db, passwordStore, aiConfigStore, legalAi, typeSafeConfigStore, typeSafe });
   const server = createServer(app);
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -92,6 +97,21 @@ test("authenticated dashboard can validate and store a token without returning i
     const responseText = await saved.text();
     assert.equal(responseText.includes(secret), false);
     assert.equal(await tokenStore.get(), secret);
+
+    const typeSafeSecret = "typesafe-api-key-test-not-real";
+    const typeSafeSaved = await fetch(`${base}/api/connections/typesafe`, {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+        cookie,
+        "x-csrf-token": loginBody.csrfToken,
+      },
+      body: JSON.stringify({ apiKey: typeSafeSecret, model: "jev-1.13.0", mode: "shadow" }),
+    });
+    assert.equal(typeSafeSaved.status, 200);
+    const typeSafeResponse = await typeSafeSaved.text();
+    assert.equal(typeSafeResponse.includes(typeSafeSecret), false);
+    assert.deepEqual(await typeSafeConfigStore.get(), { apiKey: typeSafeSecret, model: "jev-1.13.0", mode: "shadow" });
 
     const newPassword = "A much stronger replacement passphrase! 82";
     const changed = await fetch(`${base}/api/auth/password`, {
@@ -129,6 +149,8 @@ test("legal workspaces use live-supported CourtListener filters and lazy docket 
   const aiConfigStore = new LegalAiConfigStore(join(directory, "ai.enc"), randomBytes(32).toString("base64"));
   const legalAi = new LegalAiClient(aiConfigStore, 5_000);
   const db = new AppDatabase(join(directory, "app.sqlite3"));
+  const typeSafeConfigStore = new TypeSafeConfigStore(join(directory, "typesafe.enc"), randomBytes(32).toString("base64"));
+  const typeSafe = new TypeSafeDecisionService(typeSafeConfigStore, db, 5_000);
   const calls: Array<{ tool: string; args: Record<string, unknown> }> = [];
   const fakeMcp = {
     async call(tool: string, args: Record<string, unknown>) {
@@ -181,7 +203,7 @@ test("legal workspaces use live-supported CourtListener filters and lazy docket 
     maxRequestsPerMinute: 100,
     lanUrls: [],
   } as AppConfig;
-  const app = createApp({ config, security, tokenStore, mcp: fakeMcp, db, passwordStore, aiConfigStore, legalAi });
+  const app = createApp({ config, security, tokenStore, mcp: fakeMcp, db, passwordStore, aiConfigStore, legalAi, typeSafeConfigStore, typeSafe });
   const server = createServer(app);
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;

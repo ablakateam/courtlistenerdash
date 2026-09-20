@@ -16,6 +16,7 @@ const { TokenStore } = await import("../dist-server/server/token-store.js");
 const { PasswordStore } = await import("../dist-server/server/password-store.js");
 const { LegalAiConfigStore } = await import("../dist-server/server/ai-config-store.js");
 const { LegalAiClient } = await import("../dist-server/server/legal-ai.js");
+const { TypeSafeConfigStore } = await import("../dist-server/server/typesafe-config-store.js");
 
 const brownCluster = {
   id: 105221,
@@ -199,7 +200,7 @@ const fakeMcp = {
 const passwordHash = await hashPassword(password);
 const credentialKey = randomBytes(32).toString("base64");
 const config = {
-  version: "1.2.0-fixture",
+  version: "1.3.0-fixture",
   host: "127.0.0.1",
   port,
   publicPort: port,
@@ -219,6 +220,7 @@ const config = {
   sessionTtlMs: 60 * 60_000,
   requestTimeoutMs: 5_000,
   aiRequestTimeoutMs: 5_000,
+  typeSafeRequestTimeoutMs: 5_000,
   maxRequestsPerMinute: 1_000,
   lanUrls: [`http://127.0.0.1:${port}`],
 };
@@ -227,8 +229,61 @@ const passwordStore = new PasswordStore(join(directory, "password.hash"), passwo
 const aiConfigStore = new LegalAiConfigStore(join(directory, "ai.enc"), credentialKey);
 const legalAi = new LegalAiClient(aiConfigStore, 5_000);
 const database = new AppDatabase(join(directory, "fixture.sqlite3"));
+const typeSafeConfigStore = new TypeSafeConfigStore(join(directory, "typesafe.enc"), credentialKey);
+const fakeTypeSafe = {
+  async validate(candidate) {
+    return { actualModel: candidate.model, models: [{ name: candidate.model, description: "Fixture Jev model", releaseDate: "2026-09-15" }] };
+  },
+  async status() {
+    return {
+      configured: true,
+      available: true,
+      mode: "shadow",
+      model: "jev-1.13.0",
+      actualModel: "jev-1.13.0",
+      endpoint: "https://api.typesafe.ai",
+      lastCheckedAt: new Date().toISOString(),
+      lastSuccessfulDecisionAt: new Date().toISOString(),
+      lastError: null,
+      models: [{ name: "jev-1.13.0", description: "Fixture Jev model", releaseDate: "2026-09-15" }],
+      usage: { ...database.typeSafeUsage(), cacheHits: 3 },
+    };
+  },
+  async enhanceSemanticResults(data) {
+    const values = Array.isArray(data?.results) ? data.results : [];
+    const results = values.map((item, index) => {
+      const lens = {
+        status: "shadow",
+        mode: "shadow",
+        schemaVersion: "search_relevance_noul_v1",
+        modelVersion: "jev-1.13.0",
+        originalRank: index + 1,
+        assistedRank: index + 1,
+        relevanceBand: "Directly responsive",
+        overallProbability: 0.94,
+        signals: [
+          ["overall", "Overall research fit", 0.94],
+          ["legal_issue", "Legal-issue match", 0.97],
+          ["facts", "Comparable facts", 0.82],
+          ["procedure", "Procedural fit", 0.71],
+          ["direct_answer", "Directly useful passage", 0.96],
+          ["distinguish_limit", "Distinguishes or limits", 0.08],
+        ].map(([key, label, probability]) => ({ key, label, probability, kind: "model_inference" })),
+        evidenceExcerpt: item.snippet || "Separate educational facilities are inherently unequal.",
+        sourceHash: `fixture-source-${item.id}`,
+        durationMs: 112,
+        inputTokens: 386,
+        estimatedCostUsd: 0.000016,
+        experimental: true,
+      };
+      database.recordTypeSafeDecision({ queryHash: "fixture-query", sourceId: String(item.id), sourceHash: lens.sourceHash, modelVersion: lens.modelVersion, lens });
+      return { ...item, _jev: lens };
+    });
+    return { ...data, results };
+  },
+};
 const security = new SecurityManager({ passwordHash, sessionSecret: config.sessionSecret, sessionTtlMs: config.sessionTtlMs, secureCookies: false });
-const app = createApp({ config, security, tokenStore, mcp: fakeMcp, db: database, passwordStore, aiConfigStore, legalAi });
+const app = createApp({ config, security, tokenStore, mcp: fakeMcp, db: database, passwordStore, aiConfigStore, legalAi, typeSafeConfigStore, typeSafe: fakeTypeSafe });
 const server = createServer(app);
 
 server.listen(port, "127.0.0.1", () => process.stdout.write(`CourtListenerDash fixture server listening on http://127.0.0.1:${port}\n`));

@@ -1,7 +1,7 @@
 # CourtListenerDash project state
 
-Last reviewed: **2026-09-20**  
-Application version: **1.2.0**  
+Last reviewed: **2026-09-20**<br>
+Application version: **1.3.0**<br>
 Lifecycle: **Public preview and active product hardening**
 
 This is the canonical handoff record for the project. Read it before planning a
@@ -62,6 +62,8 @@ These rules are architectural requirements, not optional design preferences:
 | Global Search | Implemented and browser-tested | Keeps incompatible CourtListener result types in separate tabs. |
 | Legal Research | Implemented and browser-tested | Uses collection-specific, schema-supported filters and CourtListener court choices. |
 | Semantic Search | Implemented and browser-tested | Searches CourtListener opinions semantically while preserving explicit research intent. |
+| Jev decision intelligence | Experimental prototype implemented; attorney evaluation required | Optional TypeSafe service reranks only public CourtListener opinion candidates. Shadow mode preserves CourtListener order; provider failure fails open; typed signals are labeled model inferences. |
+| Jev Decision Lab | Implemented | Shows model/schema version, source boundary, modes, latency, input-token cost, cache use, recent decisions, and evaluation gates without exposing the API key. |
 | Cases and opinions | Implemented and browser-tested | Consolidated workspace includes metadata, opinion reading, parties, authorities, related opinions, docket links, and oral records where available. |
 | AI case analysis | Implemented; provider configuration required | Long opinions are processed in sections; only source-linked conclusions render. Settings discovers and groups live Ollama Cloud/local models without exposing the key. No provider key is bundled. |
 | Page-aware legal assistant | Implemented, browser-tested, and live-provider tested | Persistent helper builds an ephemeral live index of rendered text and safe action labels, retrieves question-relevant passages, explains workspaces and navigation, and returns exact sources. A visible research query may be included; protected routes exclude their page bodies. It cannot operate controls, and current-screen answers are not complete-document reviews. |
@@ -105,6 +107,7 @@ The current security baseline includes:
 - scrypt administrator-password hashing;
 - signed HTTP-only same-site sessions and separate CSRF protection;
 - AES-256-GCM encryption for CourtListener and optional AI credentials;
+- separate AES-256-GCM encryption for the optional TypeSafe API key;
 - backend-only credential transport and diagnostic redaction;
 - endpoint-bound provider-key reuse and backend-only Ollama model discovery;
 - rate limiting for local authentication and API routes;
@@ -121,7 +124,7 @@ See [SECURITY.md](../SECURITY.md) for the complete security model.
 | Gate | Accepted baseline |
 |---|---|
 | Type safety | Client and server TypeScript checks pass. |
-| Backend/security regression | 22 automated tests pass. |
+| Backend/security regression | 24 automated tests pass, including Jev encryption, reranking, provenance, cache, usage accounting, pinned-model enforcement, and fail-open result preservation. |
 | Deterministic browser acceptance | Six focused workflows pass against CourtListener-shaped fixture data without spending CourtListener or AI-provider quota. |
 | Browser scope | Authentication, primary research flow, public-record workspaces, citation/alert/developer tools, all top-level routes, mobile navigation, recovery states, Ollama cloud-model selection, grounded page-assistant conversation, live page-index/action capture, protected-context exclusion, and administrative settings. |
 | Accessibility | Representative desktop and mobile workspaces have no serious or critical automated WCAG findings. |
@@ -143,6 +146,10 @@ not replace deliberately paced live CourtListener acceptance.
 - Direct paid PACER Fetch is not implemented.
 - Optional AI analysis requires an administrator-approved provider and data-
   governance decision.
+- Jev relevance ranking is experimental. No attorney-reviewed CourtListener
+  benchmark or live TypeSafe credential acceptance has been completed yet, so
+  shadow mode is the recommended operating state and no probability should be
+  read as legal correctness.
 - Paid Ollama Cloud was live-verified on 2026-09-20 through its official model
   catalog and chat APIs. Account billing and limits remain external to this
   application; a successful paid-account probe is not a promise of unlimited

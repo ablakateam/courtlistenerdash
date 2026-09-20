@@ -75,6 +75,11 @@ test("research moves from a question to a grounded case and saved authority", as
   await page.getByRole("button", { name: "Run semantic search" }).click();
   await expect(page.getByText("Search intent")).toBeVisible();
   await expect(page.getByText("CourtListener opinions only")).toBeVisible();
+  await expect(page.getByText("Jev Research Map")).toBeVisible();
+  await expect(page.getByText("Jev Decision Lens · experimental")).toBeVisible();
+  await expect(page.getByText("Legal-issue match")).toBeVisible();
+  await expect(page.getByText("CourtListener rank 1 · Jev preview 1")).toBeVisible();
+  await capture(page, "jev-semantic-decision-lens");
 
   await page.getByRole("link", { name: "Saved Research" }).click();
   const saved = page.locator(".saved-grid article").filter({ hasText: "Brown v. Board" });
@@ -214,12 +219,22 @@ test("all top-level routes and mobile navigation remain reachable", async ({ pag
     ["/saved", "Saved Research"],
     ["/mcp", "MCP Console"],
     ["/api-explorer", "CourtListener API Explorer"],
+    ["/decision-lab", "Jev Decision Lab"],
     ["/settings", "Settings & Connections"],
   ];
   for (const [route, heading] of routes) {
     await page.goto(route);
     await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
   }
+
+  await page.goto("/decision-lab");
+  await expect(page.getByText("search_relevance_noul_v1")).toBeVisible();
+  await expect(page.getByText("Public CourtListener opinion metadata and matched opinion passages only.")).toBeVisible();
+  await capture(page, "jev-decision-lab");
+
+  await page.goto("/settings");
+  await expect(page.getByRole("heading", { name: "Jev Intelligence" })).toBeVisible();
+  await expect(page.getByLabel("TypeSafe API key")).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");

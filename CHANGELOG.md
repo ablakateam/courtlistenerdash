@@ -8,6 +8,30 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Added
 
+- Optional TypeSafe Jev System One integration as an independent typed-decision
+  service for public CourtListener opinion results, using the official
+  JavaScript SDK and pinned `jev-1.13.0` model by default.
+- Backend-only Jev API-key entry in Settings with connection validation, live
+  model discovery, AES-256-GCM storage, rotation/removal, and no credential
+  exposure to the browser.
+- Evaluation, shadow-preview, active-experimental, and off modes. Shadow mode
+  displays Jev's prospective rank without changing CourtListener order.
+- Source-traceable Jev Decision Lens and Research Map for overall research fit,
+  legal issue, comparable facts, procedure, directly useful reasoning, and
+  distinguishing/limiting language.
+- Jev Decision Lab with model/schema version, source boundary, recent decision
+  audit, latency, input-token and cost metrics, cache use, and visible
+  attorney-evaluation gates.
+- Versioned `search_relevance_noul_v1` contract, encrypted configuration,
+  bounded concurrency, query/source/schema/model cache, provenance hashes, and
+  additive SQLite decision records.
+- Offline attorney-reviewed evaluation harness reporting nDCG@10, MRR@10,
+  precision@5, recall@10, Brier score, expected calibration error, latency,
+  and estimated cost.
+- TypeSafe research and architecture record covering appropriate and
+  inappropriate Jev uses, security and retention considerations, evaluation
+  design, failure behavior, and a prioritized legal-intelligence opportunity
+  map.
 - Persistent bottom-right Legal Research Assistant that explains the current
   workspace, summarizes allowed current-screen CourtListener material, supports multi-
   turn follow-ups, suggests page-specific questions, and links every displayed
@@ -60,6 +84,10 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Changed
 
+- Semantic search now preserves its original legal research question and
+  explicit intent for the optional Jev relevance decision service.
+- The application version advances to 1.3.0 for the experimental typed legal-
+  intelligence milestone.
 - Replaced deployment-specific branding, host references, and service
   identifiers with portable CourtListenerDash naming throughout the product,
   documentation, tests, installer, and screenshots.
@@ -84,6 +112,13 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Fixed
 
+- Bounded Jev evaluation no longer risks dropping CourtListener candidates
+  beyond the first 30, including when the TypeSafe provider fails.
+- Active Jev mode now rejects moving `latest` and `preview` model aliases so a
+  provider release cannot silently change an evaluated production contract.
+- TypeSafe authentication, timeout, rate-limit, or provider failures preserve
+  the complete original CourtListener result order and show an unavailable
+  inference state instead of inventing probabilities.
 - Low-contrast model and password helper notes uncovered by the assistant's
   mobile Settings accessibility pass now meet the automated WCAG gate.
 - Legal-AI credential reuse is now limited to the same provider and endpoint,
@@ -125,7 +160,7 @@ under **Unreleased** until its production-readiness checks are complete.
 ### Verification
 
 - TypeScript checks pass.
-- 22 automated tests pass.
+- 24 automated tests pass.
 - Production browser bundle builds successfully.
 - Initial Docker image and GitHub CI builds pass.
 - All 19 expected official CourtListener MCP tools were discovered live.
@@ -162,3 +197,8 @@ under **Unreleased** until its production-readiness checks are complete.
   preserved the current-page caveat, and returned no credential data.
 - The release candidate was installed on a private-network validation host and
   served with the expected security headers.
+- The Jev milestone passes 24 backend/security tests and six deterministic
+  browser workflows; accepted screenshots cover semantic Decision Lens and the
+  Decision Lab without using CourtListener, TypeSafe, or legal-AI quota.
+- The synthetic evaluation fixture validates metric calculations only and is
+  explicitly excluded from legal-quality claims.

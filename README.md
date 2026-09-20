@@ -72,6 +72,7 @@ follow.
 |---|---|
 | Find an authority | Search case names, citations, issues, courts, judges, dates, and other CourtListener fields. |
 | Explore an unfamiliar issue | Ask a natural-language research question and keep the legal purpose visible beside CourtListener-ranked authorities. |
+| Inspect why a result may matter | Optionally use Jev's typed Decision Lens to compare issue, fact, procedure, and direct-answer signals while retaining the CourtListener source and original rank. |
 | Get help without leaving the page | Open the persistent Legal Research Assistant to explain the current workspace, inspect its live page index, summarize allowed visible material, identify available controls, ask follow-ups, jump to exact passages, or follow a suggested research destination. |
 | Understand a long case | Read the complete opinion and, when an AI provider is configured, generate a structured analysis with holding, rule, facts, reasoning, disposition, and exact supporting passages. |
 | Follow federal litigation | Open a RECAP docket, move through its timeline, parties, attorneys, filings, attachments, and available public documents. |
@@ -141,6 +142,31 @@ against the complete retrieved document. A displayed holding, rule, fact, or
 reasoning point must carry an exact passage reference that the lawyer can open
 in the opinion. If the evidence cannot be tied back to the source, it is not
 shown as a grounded conclusion.
+
+### Jev typed legal intelligence
+
+CourtListenerDash also includes an optional, experimental integration with
+[TypeSafe AI's Jev System One model](https://typesafe.ai/). Jev is not used to
+write legal prose or invent cases. After CourtListener returns public opinion
+results, Jev can make six narrow relevance judgments—legal-issue match,
+comparable facts, procedural fit, direct usefulness, limiting treatment, and
+overall research fit—and return a probability for each.
+
+![Semantic CourtListener results with the Jev Research Map and source-traceable Decision Lens](docs/images/jev-semantic-decision-lens.png)
+
+The **Jev Decision Lens** always keeps the CourtListener authority, source
+excerpt, original rank, model version, and experimental status visible. Shadow
+mode previews Jev's order without changing CourtListener's order. If TypeSafe
+is unavailable, the complete original CourtListener result set remains intact.
+
+![Jev Decision Lab showing model, cost, latency, schema, and validation gates](docs/images/jev-decision-lab.png)
+
+The **Decision Lab** makes model inference auditable: it shows the operating
+mode, pinned model, versioned decision schema, data boundary, input-token cost,
+latency, cache use, and recent decision records. Active experimental reranking
+is available for evaluation, but production adoption is gated by an
+attorney-reviewed benchmark. Read the complete
+[Jev architecture and evaluation plan](docs/TYPESAFE_JEV_ARCHITECTURE.md).
 
 A persistent **Legal Research Assistant** is available at the bottom-right of
 every authenticated page. It understands which workspace is open, can explain
@@ -229,6 +255,13 @@ Legal AI Connection**, select **Ollama Cloud (paid API)**, paste a backend API
 key, choose **Load models**, select an available model, and validate the
 connection. Provider billing and account limits remain managed by Ollama.
 
+To evaluate Jev, open **Settings → Jev Intelligence**, paste a TypeSafe API
+key, keep the pinned model, and begin in **Shadow preview**. The key is
+validated and encrypted by the backend. The implemented Jev workflow sends
+only the research question, selected intent, public CourtListener metadata, and
+matched public opinion passage—not docket filings, uploads, saved research, or
+private matter material.
+
 For Ubuntu/systemd, reverse-proxy, certificate, backup, upgrade, and generic
 cloud-container instructions, read the [deployment guide](docs/DEPLOYMENT.md).
 
@@ -256,10 +289,12 @@ code:
 - [Roadmap and milestones](docs/ROADMAP.md)
 - [Current product-hardening audit](docs/qa/2026-09-19-product-hardening-audit.md)
 - [Latest private-LAN deployment acceptance](docs/qa/2026-09-20-deployment-acceptance.md)
+- [TypeSafe Jev prototype milestone and acceptance record](docs/qa/2026-09-20-typesafe-jev-milestone.md)
 - [Browser action coverage ledger](docs/qa/ACTION_COVERAGE.md)
 - [Lessons learned](docs/LESSONS_LEARNED.md)
 - [Architecture and trust boundaries](docs/ARCHITECTURE.md)
 - [Legal-AI research workflow](docs/LEGAL_AI_RESEARCH_WORKFLOW.md)
+- [TypeSafe Jev architecture, evaluation, and opportunity map](docs/TYPESAFE_JEV_ARCHITECTURE.md)
 - [Modern legal-research pattern review](docs/LEGAL_RESEARCH_PRODUCT_PATTERNS.md)
 - [MCP tool inventory](docs/MCP_TOOL_INVENTORY.md)
 - [MCP coverage matrix](docs/MCP_COVERAGE_MATRIX.md)
@@ -274,6 +309,8 @@ npm run check
 npm test
 npm run build
 npm run test:e2e:fixture
+# Score an existing attorney-reviewed Jev run:
+npm run eval:jev -- eval/datasets/reviewed.jsonl
 ```
 
 The fixture browser workflow uses predictable CourtListener-shaped records and
