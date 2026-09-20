@@ -133,6 +133,27 @@ export interface GroundedAnswer {
   generatedAt: string;
 }
 
+export interface PageAssistantTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
+export interface PageAssistantAnswer {
+  answer: GroundedClaim | null;
+  caveats: string[];
+  suggestedQuestions: string[];
+  provider: LegalAiProvider;
+  model: string;
+  generatedAt: string;
+  context: {
+    route: string;
+    pageTitle: string;
+    capturedCharacters: number;
+    truncated: boolean;
+    protected: boolean;
+  };
+}
+
 export type SemanticResearchIntent =
   | "issue"
   | "similar_facts"

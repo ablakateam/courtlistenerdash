@@ -20,6 +20,18 @@ with AES-256-GCM and sends it only to the official MCP endpoint. The optional
 legal-AI provider is a separate backend connection and never receives the
 CourtListener credential.
 
+```text
+Authenticated browser page
+  → explicit assistant question + sanitized allowed-page snapshot
+    → CourtListenerDash grounding and route-policy boundary
+      → configured legal-AI provider
+        → source-ID validation
+          → answer with exact page excerpts
+```
+
+Protected routes send only the question and fixed page-purpose guidance. The
+backend applies the route policy again even if a browser submits page text.
+
 ## Research surfaces
 
 The application intentionally has three search purposes:
@@ -77,3 +89,7 @@ environment variables or mounted secret files. None belong in Git.
   responses are reduced to safe model metadata, while API keys remain in the
   encrypted server-side provider configuration. Credential reuse is bound to
   the exact provider and normalized endpoint.
+- The page assistant is a current-screen aid, not a background recorder. It
+  captures allowed text only on explicit submission, labels truncated context,
+  validates source IDs, and never substitutes for the complete-opinion
+  analysis pipeline.

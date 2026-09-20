@@ -87,6 +87,36 @@ reached the result**, **Key material fact**, **Disposition**, and **Procedural
 posture**, then exposes deeper facts, issues, reasoning, separate opinions,
 authorities, limitations, and practical significance.
 
+## Page-aware legal research assistant
+
+The persistent assistant is an orientation and current-screen analysis layer.
+It does not replace CourtListener search, citation verification, or complete-
+opinion analysis.
+
+1. The browser identifies the current route and takes a fresh snapshot only
+   when the lawyer submits a question.
+2. Form controls, technical JSON, hidden elements, and assistant content are
+   removed before capture.
+3. Settings, MCP/API diagnostics, alerts, saved research, and RECAP filing text
+   use protected mode: only the question and fixed page-purpose guidance leave
+   the application.
+4. The backend assigns stable paragraph IDs to the allowed snapshot and treats
+   both the page and prior conversation as untrusted material.
+5. The model must answer in a strict JSON schema and cite supplied paragraph
+   IDs. Answers without a valid paragraph reference are discarded.
+6. Displayed excerpts are copied from the captured page, never accepted from
+   model-generated quotation text.
+7. The lawyer can expand a source and locate the corresponding passage on the
+   live page.
+8. Each session permits one active assistant request, preventing accidental
+   duplicate paid-provider calls.
+9. Oversized snapshots are reduced conservatively and produce a visible
+   incomplete-context caveat.
+
+The distinction is deliberate: **current-page answer** means the visible and
+captured screen; **complete-opinion analysis** means every retrieved opinion
+section passed through the long-document pipeline.
+
 ## Trust boundaries
 
 - CourtListener determines which authorities exist and supplies their text.
@@ -101,6 +131,8 @@ authorities, limitations, and practical significance.
   or that the authority remains good law.
 - CourtListener citation relationships are not editorial treatment signals.
 - Attorney review of the full opinion and subsequent history remains required.
+- Assistant conversation history is useful for follow-up wording but is never
+  accepted as legal evidence; each answer must bind to the fresh page snapshot.
 
 ## Provider and privacy model
 
@@ -118,7 +150,13 @@ catalog model from a grouped dropdown or deliberately enter a model name when a
 compatible server does not expose a catalog. Changing the provider endpoint
 does not carry the previously encrypted key to the new host.
 
-The UI discloses that public opinion text will be sent to the selected provider.
-This feature does not send docket filings, user-uploaded documents, or private
-matter data. A legal organization should connect only a provider approved under
-its confidentiality and data-governance rules.
+The UI discloses that the user's question and allowed current-page text will be
+sent to the selected provider. A snapshot can include a visible research query
+as well as public CourtListener data. Complete case analysis sends public
+opinion text. The page assistant can also send visible public search results,
+docket metadata, oral-argument transcripts, judicial profiles, and disclosure
+records. It does not send credential forms, technical-console content, alert
+queries, saved-research content, RECAP filing text, user-uploaded documents, or
+private matter data. A legal organization should connect only a provider
+approved under its confidentiality and data-governance rules and should not
+type confidential client facts into the assistant without authorization.

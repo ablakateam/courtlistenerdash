@@ -228,6 +228,70 @@ test("all top-level routes and mobile navigation remain reachable", async ({ pag
   await expectAccessible(page);
 });
 
+test("page-aware legal assistant stays grounded and protects sensitive workspaces", async ({ page }) => {
+  let protectedContext: string | null = null;
+  await page.route("**/api/status", async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    await route.fulfill({
+      response,
+      json: {
+        ...body,
+        legalAi: {
+          configured: true,
+          available: true,
+          provider: "ollama",
+          model: "gemma4:31b",
+          baseUrl: "https://ollama.com",
+          lastCheckedAt: new Date().toISOString(),
+          lastError: null,
+        },
+      },
+    });
+  });
+  await page.route("**/api/assistant/ask", async (route) => {
+    const request = route.request().postDataJSON() as { route: string; contextText: string; pageTitle: string };
+    if (request.route === "/settings") protectedContext = request.contextText;
+    const source = request.route === "/settings"
+      ? "PAGE PURPOSE AND BOUNDARY Settings content and form data are intentionally excluded from AI context."
+      : "Find the law. Follow the record.";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        answer: { text: request.route === "/settings" ? "This page manages secure backend connections." : "This dashboard starts and resumes CourtListener-grounded legal research.", sources: [{ paragraph: "P1", excerpt: source, verified: true }] },
+        caveats: request.route === "/settings" ? ["This workspace is privacy-protected: its page body was not sent to the AI provider."] : [],
+        suggestedQuestions: ["What should I verify next?"],
+        provider: "ollama",
+        model: "gemma4:31b",
+        generatedAt: new Date().toISOString(),
+        context: { route: request.route, pageTitle: request.pageTitle, capturedCharacters: request.contextText.length, truncated: false, protected: request.route === "/settings" },
+      }),
+    });
+  });
+  await signIn(page);
+  await page.getByRole("button", { name: "Open legal research assistant" }).click();
+  await expect(page.getByRole("dialog", { name: "Page-aware legal research assistant" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start legal research" })).toHaveAttribute("href", "/research");
+  await page.getByRole("button", { name: "What can I do on this page?" }).click();
+  await expect(page.getByText("This dashboard starts and resumes CourtListener-grounded legal research.")).toBeVisible();
+  await expect(page.getByText("Page source P1")).toBeVisible();
+  await capture(page, "page-aware-legal-assistant");
+  await expectAccessible(page);
+
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "Open legal research assistant" }).click();
+  await expect(page.getByText("Privacy-protected guidance")).toBeVisible();
+  await page.getByRole("button", { name: "What can I configure here?" }).click();
+  await expect(page.getByText("This page manages secure backend connections.")).toBeVisible();
+  expect(protectedContext).toBe("");
+  await expect(page.getByText("Only your question and page-purpose guidance are sent")).toBeVisible();
+  await expect(page.getByText("Platform guidance")).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("dialog", { name: "Page-aware legal research assistant" })).toBeVisible();
+  await expectAccessible(page);
+});
+
 test("secondary controls fail safely and administrative settings remain isolated", async ({ page }) => {
   test.setTimeout(45_000);
   await signIn(page);

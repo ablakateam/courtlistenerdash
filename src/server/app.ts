@@ -25,6 +25,7 @@ import { TokenStore } from "./token-store.js";
 import { LegalAiConfigStore, normalizeLegalAiBaseUrl, normalizeLegalAiConfig } from "./ai-config-store.js";
 import { LegalAiClient } from "./legal-ai.js";
 import { analyzeOpinion, answerOpinionQuestion } from "./legal-analysis.js";
+import { answerPageAssistantQuestion } from "./page-assistant.js";
 
 interface AppDependencies {
   config: AppConfig;
@@ -260,6 +261,7 @@ export function createApp(deps: AppDependencies): Express {
   let usageCache: { raw: unknown; summary: ApiUsageSummary; expiresAt: number } | null = null;
   let usagePending: Promise<{ raw: unknown; summary: ApiUsageSummary }> | null = null;
   const analysisJobs = new Map<number, Promise<void>>();
+  const assistantSessions = new Set<string>();
   const opinionTextCache = new Map<number, { text: string; expiresAt: number }>();
 
   async function loadOpinionText(opinionId: number): Promise<string> {
@@ -516,12 +518,47 @@ export function createApp(deps: AppDependencies): Express {
   app.delete("/api/connections/legal-ai", security.requireCsrf, async (req, res) => {
     try {
       if (objectBody(req.body).confirm !== "REMOVE") throw new Error("Type REMOVE to clear the AI connection");
-      if (analysisJobs.size) throw new Error("Wait for the active case analysis to finish before removing the AI connection");
+      if (analysisJobs.size || assistantSessions.size) throw new Error("Wait for active AI work to finish before removing the AI connection");
       await aiConfigStore.clear();
       db.recordActivity("connection", "legal-ai-remove", "Legal AI provider configuration removed", "success", null);
       res.json(await legalAi.status());
     } catch (error) {
       res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+  });
+
+  app.post("/api/assistant/ask", security.requireCsrf, async (req, res) => {
+    const started = performance.now();
+    const sessionId = String((res.locals.session as { id?: unknown } | undefined)?.id ?? "unknown");
+    if (assistantSessions.has(sessionId)) {
+      res.status(429).json({ error: "The page assistant is already answering another question in this session" });
+      return;
+    }
+    assistantSessions.add(sessionId);
+    try {
+      const aiStatus = await legalAi.status();
+      if (!aiStatus.configured) {
+        res.status(409).json({ error: "Configure a legal AI provider in Settings before using the page assistant" });
+        return;
+      }
+      const body = objectBody(req.body);
+      const answer = await answerPageAssistantQuestion({
+        route: body.route,
+        pageTitle: body.pageTitle,
+        question: body.question,
+        contextText: body.contextText,
+        contextTruncated: body.contextTruncated,
+        history: body.history,
+        ai: legalAi,
+      });
+      db.recordActivity("analysis", "page-assistant", `Page-aware question answered on ${answer.context.route}`, "success", Math.round(performance.now() - started));
+      res.json(answer);
+    } catch (error) {
+      const message = String(redactSecrets(error instanceof Error ? error.message : String(error))).slice(0, 2_000);
+      db.recordActivity("analysis", "page-assistant", "Page-aware question failed", "error", Math.round(performance.now() - started));
+      res.status(400).json({ error: message });
+    } finally {
+      assistantSessions.delete(sessionId);
     }
   });
 

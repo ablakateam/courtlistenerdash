@@ -61,6 +61,9 @@ Status: **In progress**
       project with the LawNova and Prose open-product mission
 - [x] Add backend-only paid Ollama Cloud discovery, selectable live model
       catalog, secure endpoint-bound key handling, and provider smoke test
+- [x] Add a persistent page-aware legal research assistant with exact source
+      passages, multi-turn questions, route-specific guidance, protected
+      workspaces, live Ollama acceptance, and responsive accessibility coverage
 
 Exit criteria: all high-severity findings closed, every visible feature has a
 verified backend path and appropriate state handling, and the practicing-lawyer

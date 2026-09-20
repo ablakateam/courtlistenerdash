@@ -231,3 +231,27 @@ Action: present direct Ollama Cloud and local Ollama as distinct connection
 choices, discover models from the endpoint that will actually run them, and
 validate a selected model before saving. A catalog entry alone is not evidence
 that inference works.
+
+## 2026-09-20 — A page assistant is not a complete-document analyst
+
+A persistent assistant can see what the lawyer sees and reduce navigation and
+orientation time, but a browser page may contain only one document chunk, one
+selected tab, or a size-limited snapshot. Calling that a full case summary
+would recreate the truncation problem the long-opinion pipeline was designed
+to avoid.
+
+Action: label assistant responses as current-page answers, report snapshot
+reduction, and keep complete-opinion analysis as a separate section-by-section
+workflow with complete-coverage evidence.
+
+## 2026-09-20 — Page awareness needs a server-enforced privacy map
+
+Removing password inputs from a DOM snapshot is not enough. Settings, saved
+research, alert queries, raw diagnostics, and filing text can reveal secrets,
+strategy, or material outside the approved provider boundary. A malicious or
+defective browser also cannot be trusted to label a route protected.
+
+Action: maintain an explicit route policy on both sides. Capture only after an
+intentional question, strip forms and technical output in the browser, and
+have the backend discard all submitted page text for protected routes before
+calling the provider.

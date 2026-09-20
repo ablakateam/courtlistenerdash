@@ -101,6 +101,7 @@ import {
   courtListenerFileUrl,
 } from "../shared/courtlistener-urls";
 import { ApiError, api, del, post, put, setCsrf } from "./api";
+import { PageAssistant } from "./PageAssistant";
 
 type Notice = { kind: "success" | "error" | "info"; message: string };
 const NoticeContext = createContext<(notice: Notice) => void>(() => undefined);
@@ -490,6 +491,7 @@ function Layout({ children, onLogout }: { children: ReactNode; onLogout: () => v
         </header>
         <main className="content">{children}</main>
       </div>
+      <PageAssistant aiStatus={status.data?.legalAi ?? null} />
     </div>
   );
 }

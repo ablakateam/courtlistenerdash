@@ -1,6 +1,6 @@
 # Modern legal-research product patterns
 
-Reviewed: 2026-09-19
+Reviewed: 2026-09-20
 
 Purpose: identify interaction patterns that reduce an attorney's research time
 without copying another product's visual design or overstating CourtListener's
@@ -15,6 +15,8 @@ coverage.
 - [Westlaw Edge feature overview](https://legal.thomsonreuters.com/en/products/westlaw-edge/features)
 - [Westlaw Precision workflow announcement](https://www.thomsonreuters.com/en/press-releases/2022/september/thomson-reuters-debuts-westlaw-precision)
 - [CoCounsel AI-Assisted Research guidance](https://www.thomsonreuters.com/en-ca/help/cocounsel/legal/skills/understanding-cocounsel-skills/ai-assisted-research)
+- [Lexis+ with Protégé product workflow](https://www.lexisnexis.com/en-us/products/lexis-plus-ai.page)
+- [Vincent AI research-question workflow](https://support.vlex.com/vincent-by-vlex/vincent/core-workflows/ask-a-research-question)
 
 These are vendor descriptions, not independent performance comparisons. Their
 value here is in the workflow patterns they document.
@@ -72,6 +74,21 @@ CourtListenerDash response: prioritize Holding, Rule, Why the Court Reached the
 Result, Key Facts, and Disposition. Longer facts, authorities, limitations,
 concurrences, and dissents follow. The full opinion remains one click away.
 
+### Keep assistance inside the active research context
+
+Current Lexis and vLex product guidance emphasizes conversational follow-up,
+document summaries, prompt suggestions, visible supporting authorities, and
+movement from a question into deeper source review. The useful pattern is not
+a branded chat screen; it is eliminating the context reconstruction lawyers
+otherwise perform when moving between results, documents, and tools.
+
+CourtListenerDash response: provide a persistent bottom-right assistant that
+identifies the open workspace, offers task-specific starting questions, takes
+a fresh snapshot only when asked, and cites exact current-page passages. It
+never invents authority or silently replaces the complete-opinion pipeline.
+Protected workspaces retain navigation guidance without sending their page
+bodies to the provider.
+
 ### Preserve history without silently rerunning research
 
 Research history is useful when reopening it does not unexpectedly spend API
@@ -122,3 +139,5 @@ only after ordinary breadcrumbs and back-navigation are reliable.
 5. Build side-by-side case comparison only after source-linked single-case
    analysis is fully accepted.
 6. Never label CourtListener citation resolution as a good-law determination.
+7. Evaluate the page-aware assistant by attorney time saved, source traceability,
+   context honesty, and privacy—not by how conversational it sounds.

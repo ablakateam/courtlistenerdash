@@ -8,6 +8,17 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Added
 
+- Persistent bottom-right Legal Research Assistant that explains the current
+  workspace, summarizes allowed current-screen CourtListener material, supports multi-
+  turn follow-ups, suggests page-specific questions, and links every displayed
+  answer to an exact captured page passage.
+- Explicit page-assistant privacy modes: Settings, MCP/API diagnostics, alerts,
+  saved research, and RECAP filing text remain outside provider context while
+  the assistant can still explain those workflows from reviewed product
+  guidance.
+- Responsive and accessibility-tested assistant panel with current-page source
+  location, truncation notices, one-active-request protection, and an honest
+  distinction between a screen snapshot and complete-opinion analysis.
 - Live Ollama model discovery in Settings, with separate paid Ollama Cloud,
   local-service, and compatible-endpoint choices; cloud/local grouping; model
   metadata; and a manual fallback for servers that do not expose a catalog.
@@ -67,6 +78,8 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Fixed
 
+- Low-contrast model and password helper notes uncovered by the assistant's
+  mobile Settings accessibility pass now meet the automated WCAG gate.
 - Legal-AI credential reuse is now limited to the same provider and endpoint,
   preventing an encrypted key from being forwarded when an administrator
   changes the configured backend URL.
@@ -106,7 +119,7 @@ under **Unreleased** until its production-readiness checks are complete.
 ### Verification
 
 - TypeScript checks pass.
-- 18 automated tests pass.
+- 21 automated tests pass.
 - Production browser bundle builds successfully.
 - Initial Docker image and GitHub CI builds pass.
 - All 19 expected official CourtListener MCP tools were discovered live.
@@ -128,11 +141,15 @@ under **Unreleased** until its production-readiness checks are complete.
   official report format.
 - The supported deployment workflow served the accepted frontend over
   private-network HTTPS.
-- Five focused fixture-browser workflows pass in about 13 seconds; the new
-  workflow covers failure recovery, token rotation/removal, insecure AI
-  endpoint rejection, password rotation, sign-out, and reauthentication.
+- Six focused fixture-browser workflows pass; coverage includes page-aware AI
+  grounding and protected-workspace exclusion as well as failure recovery,
+  token rotation/removal, insecure AI endpoint rejection, password rotation,
+  sign-out, and reauthentication.
 - A paid Ollama Cloud credential was verified directly against the official
   model-catalog and chat endpoints without recording the credential; the
   account returned 20 models and completed a minimal `gemma4:31b` response.
+- A live `gemma4:31b` page-assistant request extracted the visible *Brown v.
+  Board of Education* holding, retained an exact verified source passage,
+  disclosed the current-screen limitation, and returned no credential data.
 - The release candidate was installed on a private-network validation host and
   served with the expected security headers.

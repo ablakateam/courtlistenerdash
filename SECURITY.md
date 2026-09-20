@@ -49,6 +49,23 @@ Selecting Ollama Cloud therefore sends the public opinion text to Ollama's
 hosted API; selecting local Ollama keeps that provider hop on the configured
 server unless the chosen local model is itself a cloud shortcut.
 
+The page-aware assistant sends a question and a fresh, size-bounded snapshot of
+allowed current-page text only after the authenticated user submits the prompt.
+This may include a visible research query as well as public CourtListener data.
+Inputs, forms, hidden content, raw technical JSON, and the assistant itself are
+not captured. Settings, MCP/API diagnostics, alerts, saved research, and RECAP
+filing text are protected workspaces whose page bodies are never included. The
+backend independently enforces that route policy instead of trusting the
+browser flag. Model answers must cite a backend-assigned paragraph ID; invalid
+sources are discarded and displayed excerpts are copied from the submitted
+page text. Conversation history helps interpret follow-ups but is not evidence.
+
+Public search questions can still reveal a legal strategy, and users can type
+sensitive text into any prompt. The UI therefore states when the question and
+page snapshot will be sent. Deployments should use only a provider approved for
+their practice and should not submit confidential client information without
+authorization.
+
 ## Certificate trust
 
 The default installer creates a private self-signed LAN certificate. Browsers
