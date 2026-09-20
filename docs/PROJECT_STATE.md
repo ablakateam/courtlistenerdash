@@ -146,10 +146,11 @@ not replace deliberately paced live CourtListener acceptance.
 - Direct paid PACER Fetch is not implemented.
 - Optional AI analysis requires an administrator-approved provider and data-
   governance decision.
-- Jev relevance ranking is experimental. No attorney-reviewed CourtListener
-  benchmark or live TypeSafe credential acceptance has been completed yet, so
-  shadow mode is the recommended operating state and no probability should be
-  read as legal correctness.
+- Jev relevance ranking is experimental. A backend-held credential, pinned
+  `jev-1.13.0`, model catalog, and one source-retaining public-opinion decision
+  were live-verified on 2026-09-20. No attorney-reviewed CourtListener
+  benchmark has been completed, so shadow mode remains the recommended
+  operating state and no probability should be read as legal correctness.
 - Paid Ollama Cloud was live-verified on 2026-09-20 through its official model
   catalog and chat APIs. Account billing and limits remain external to this
   application; a successful paid-account probe is not a promise of unlimited

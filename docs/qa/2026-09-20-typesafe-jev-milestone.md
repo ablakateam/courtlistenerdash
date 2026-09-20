@@ -36,10 +36,13 @@ benchmark pending**
 | Deterministic browser workflow | Six workflows passed in 15.6 seconds |
 | Production bundle | Passed; Vite and Node server built successfully |
 | Isolated service deployment | Version 1.3.0 healthy on loopback and all three private-network interfaces |
+| Live TypeSafe connection | Pinned `jev-1.13.0` validated; three model-catalog entries returned |
+| Live public-opinion decision | Six typed signals returned in 203 ms from 668 input tokens; source provenance retained |
 
 ## Deliberately not claimed
 
-- No real TypeSafe credential has been supplied or recorded in the repository.
+- A real TypeSafe credential was validated through encrypted backend storage;
+  its value was not printed, logged, or recorded in the repository.
 - No attorney-reviewed CourtListener relevance dataset has been completed.
 - The displayed relevance bands are experimental UX categories, not approved
   automation thresholds.

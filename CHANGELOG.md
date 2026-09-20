@@ -202,3 +202,9 @@ under **Unreleased** until its production-readiness checks are complete.
   Decision Lab without using CourtListener, TypeSafe, or legal-AI quota.
 - The synthetic evaluation fixture validates metric calculations only and is
   explicitly excluded from legal-quality claims.
+- A backend-held TypeSafe credential and pinned `jev-1.13.0` were live-
+  validated without exposing the key. One controlled public *Brown v. Board of
+  Education* relevance decision returned six typed signals in 203 ms from 668
+  input tokens, retained the source excerpt/hash, and cost an estimated
+  $0.000028 at the documented input rate. This connectivity check is not a
+  legal-quality benchmark.
