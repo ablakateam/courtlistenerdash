@@ -50,3 +50,26 @@ cases, complete oral playback, and disclosure source-document presentation.
 
 The quota-free browser suite remains the primary regression gate, so ordinary
 UI and workflow testing does not consume the connected CourtListener account.
+
+## Ollama Cloud follow-up acceptance
+
+Revision `1cf59d6` added the optional paid Ollama Cloud connection and live
+model selector. It passed the complete local and GitHub verification gates
+before installation. The validation host then produced this evidence:
+
+| Check | Observed result | Status |
+|---|---|---|
+| Official Ollama Cloud catalog | Authenticated direct API returned 20 selectable models | Passed |
+| Application-equivalent provider validation | `gemma4:31b` returned the required JSON readiness response | Passed |
+| Encrypted application configuration | Provider key stored in the dedicated data directory as a 0600 AES-256-GCM envelope | Passed |
+| Installed model discovery | Decrypted backend configuration returned 20 cloud models and no key in the catalog response | Passed |
+| Regression gate | 18 server/security tests and all five browser workflows passed | Passed |
+| Deployment isolation | Only the standalone dashboard service restarted; the separately running Ollama service remained active | Passed |
+| Private-network availability | Loopback and all configured private-network HTTPS paths returned healthy responses | Passed |
+
+The local Ollama service also demonstrated why the connection paths remain
+separate: its catalog retained cloud shortcut names while inference returned an
+authentication error. The direct Cloud credential succeeded. A displayed
+model name is therefore not treated as proof of usable inference; the selected
+endpoint and model must pass validation together before the application saves
+them.
