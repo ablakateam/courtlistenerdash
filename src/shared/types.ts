@@ -51,6 +51,23 @@ export interface LegalAiStatus {
   lastError: string | null;
 }
 
+export interface LegalAiModelOption {
+  name: string;
+  displayName: string;
+  source: "cloud" | "local";
+  size: number | null;
+  family: string | null;
+  parameterSize: string | null;
+  modifiedAt: string | null;
+}
+
+export interface LegalAiModelCatalog {
+  provider: "ollama";
+  baseUrl: string;
+  models: LegalAiModelOption[];
+  fetchedAt: string;
+}
+
 export interface SourcePassage {
   paragraph: string;
   excerpt: string;

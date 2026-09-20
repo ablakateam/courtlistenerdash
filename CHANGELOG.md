@@ -8,6 +8,11 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Added
 
+- Live Ollama model discovery in Settings, with separate paid Ollama Cloud,
+  local-service, and compatible-endpoint choices; cloud/local grouping; model
+  metadata; and a manual fallback for servers that do not expose a catalog.
+- Backend and browser regression coverage for Ollama catalog loading and cloud-
+  model selection without returning provider credentials to the frontend.
 - Canonical project-state record covering capabilities, integration boundaries,
   verification evidence, known limitations, documentation ownership, and the
   definition of done for future features.
@@ -62,6 +67,9 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Fixed
 
+- Legal-AI credential reuse is now limited to the same provider and endpoint,
+  preventing an encrypted key from being forwarded when an administrator
+  changes the configured backend URL.
 - Financial disclosures no longer fail because of unsupported `-year`
   ordering.
 - RECAP document lists no longer fail because of unsupported
@@ -98,7 +106,7 @@ under **Unreleased** until its production-readiness checks are complete.
 ### Verification
 
 - TypeScript checks pass.
-- 17 automated tests pass.
+- 18 automated tests pass.
 - Production browser bundle builds successfully.
 - Initial Docker image and GitHub CI builds pass.
 - All 19 expected official CourtListener MCP tools were discovered live.
@@ -123,5 +131,8 @@ under **Unreleased** until its production-readiness checks are complete.
 - Five focused fixture-browser workflows pass in about 13 seconds; the new
   workflow covers failure recovery, token rotation/removal, insecure AI
   endpoint rejection, password rotation, sign-out, and reauthentication.
+- A paid Ollama Cloud credential was verified directly against the official
+  model-catalog and chat endpoints without recording the credential; the
+  account returned 20 models and completed a minimal `gemma4:31b` response.
 - The release candidate was installed on a private-network validation host and
   served with the expected security headers.

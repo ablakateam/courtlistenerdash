@@ -59,6 +59,8 @@ Status: **In progress**
       verification screenshots without consuming live account quota
 - [x] Document CourtListener and Free Law Project attribution and connect the
       project with the LawNova and Prose open-product mission
+- [x] Add backend-only paid Ollama Cloud discovery, selectable live model
+      catalog, secure endpoint-bound key handling, and provider smoke test
 
 Exit criteria: all high-severity findings closed, every visible feature has a
 verified backend path and appropriate state handling, and the practicing-lawyer

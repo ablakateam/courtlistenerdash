@@ -218,3 +218,16 @@ or product boundary.
 Action: maintain `docs/PROJECT_STATE.md` as the current handoff. Every feature
 must update it when capabilities, boundaries, verification evidence, known
 limitations, or release decisions change.
+
+## 2026-09-20 — Ollama Cloud has two valid connection paths
+
+A local Ollama catalog can retain cloud shortcut entries even when the local
+service's cloud authentication no longer succeeds. On the validation host,
+`/api/tags` listed two cloud shortcuts while chat returned `Unauthorized`; the
+same backend-held key successfully listed 20 models and completed a minimal
+chat through the direct `https://ollama.com/api` path.
+
+Action: present direct Ollama Cloud and local Ollama as distinct connection
+choices, discover models from the endpoint that will actually run them, and
+validate a selected model before saving. A catalog entry alone is not evidence
+that inference works.

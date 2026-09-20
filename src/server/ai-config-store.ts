@@ -19,7 +19,7 @@ interface EncryptedConfigFile {
   updatedAt: string;
 }
 
-function normalizedBaseUrl(value: string, provider: LegalAiProvider): string {
+export function normalizeLegalAiBaseUrl(value: string, provider: LegalAiProvider): string {
   const fallback = provider === "ollama"
     ? "http://127.0.0.1:11434"
     : provider === "anthropic"
@@ -49,7 +49,7 @@ export function normalizeLegalAiConfig(value: unknown): LegalAiConfig {
   if (apiKey.length > 5_000 || /[\r\n]/.test(apiKey)) throw new Error("The AI API key is malformed");
   return {
     provider,
-    baseUrl: normalizedBaseUrl(String(input.baseUrl ?? ""), provider),
+    baseUrl: normalizeLegalAiBaseUrl(String(input.baseUrl ?? ""), provider),
     model,
     apiKey,
   };

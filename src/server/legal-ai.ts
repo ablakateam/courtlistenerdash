@@ -1,4 +1,9 @@
-import type { JsonObject, LegalAiStatus } from "../shared/types.js";
+import type {
+  JsonObject,
+  LegalAiModelCatalog,
+  LegalAiModelOption,
+  LegalAiStatus,
+} from "../shared/types.js";
 import type { LegalAiConfig } from "./ai-config-store.js";
 import { LegalAiConfigStore } from "./ai-config-store.js";
 import { redactSecrets } from "./security.js";
@@ -18,6 +23,26 @@ function safeProviderError(status: number, body: string): Error {
   return new Error(`AI provider request failed (${status})${cleaned ? `: ${cleaned}` : ""}`);
 }
 
+function nullableText(value: unknown, max = 160): string | null {
+  if (typeof value !== "string") return null;
+  const cleaned = value.trim();
+  return cleaned ? cleaned.slice(0, max) : null;
+}
+
+function isOllamaCloudEndpoint(baseUrl: string): boolean {
+  try {
+    const host = new URL(baseUrl).hostname.toLowerCase();
+    return host === "ollama.com" || host.endsWith(".ollama.com");
+  } catch {
+    return false;
+  }
+}
+
+function isCloudModel(name: string, size: number | null, directCloud: boolean): boolean {
+  if (directCloud) return true;
+  return /(?:^|[-:])cloud(?:$|[-:])/i.test(name) || (size !== null && size > 0 && size < 1_024);
+}
+
 export class LegalAiClient {
   private available = false;
   private lastCheckedAt: string | null = null;
@@ -27,6 +52,58 @@ export class LegalAiClient {
     private readonly store: LegalAiConfigStore,
     private readonly timeoutMs = 300_000,
   ) {}
+
+  async listOllamaModels(config: LegalAiConfig): Promise<LegalAiModelCatalog> {
+    if (config.provider !== "ollama") throw new Error("Model discovery is available only for Ollama connections");
+    const headers: Record<string, string> = { accept: "application/json" };
+    if (config.apiKey) headers.authorization = `Bearer ${config.apiKey}`;
+    const response = await fetch(joinUrl(config.baseUrl, "/api/tags"), {
+      headers,
+      signal: AbortSignal.timeout(Math.min(this.timeoutMs, 30_000)),
+    });
+    const responseText = await response.text();
+    if (!response.ok) throw safeProviderError(response.status, responseText);
+    let payload: JsonObject;
+    try {
+      payload = JSON.parse(responseText) as JsonObject;
+    } catch {
+      throw new Error("Ollama returned a non-JSON model catalog");
+    }
+    if (!Array.isArray(payload.models)) throw new Error("Ollama returned an invalid model catalog");
+    const directCloud = isOllamaCloudEndpoint(config.baseUrl);
+    const seen = new Set<string>();
+    const models: LegalAiModelOption[] = [];
+    for (const raw of payload.models.slice(0, 500)) {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+      const item = raw as JsonObject;
+      const name = nullableText(item.model ?? item.name);
+      if (!name || name.length > 160 || !/^[\w./:@+-]+$/.test(name) || seen.has(name)) continue;
+      seen.add(name);
+      const details = item.details && typeof item.details === "object" && !Array.isArray(item.details)
+        ? item.details as JsonObject
+        : {};
+      const size = typeof item.size === "number" && Number.isFinite(item.size) && item.size >= 0 ? item.size : null;
+      models.push({
+        name,
+        displayName: name,
+        source: isCloudModel(name, size, directCloud) ? "cloud" : "local",
+        size,
+        family: nullableText(details.family),
+        parameterSize: nullableText(details.parameter_size),
+        modifiedAt: nullableText(item.modified_at, 80),
+      });
+    }
+    models.sort((left, right) => {
+      if (left.source !== right.source) return left.source === "cloud" ? -1 : 1;
+      return left.displayName.localeCompare(right.displayName);
+    });
+    return {
+      provider: "ollama",
+      baseUrl: config.baseUrl,
+      models: models.slice(0, 250),
+      fetchedAt: new Date().toISOString(),
+    };
+  }
 
   private async request(config: LegalAiConfig, system: string, user: string, maxTokens: number): Promise<string> {
     let url: string;

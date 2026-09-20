@@ -15,6 +15,10 @@
 - Optional legal-AI provider configuration and API keys are also submitted only
   to the backend and encrypted at rest with AES-256-GCM. The browser receives
   only provider, model, endpoint, and status metadata—never the key.
+- Ollama model discovery is performed by the backend. The browser receives a
+  sanitized model name and non-sensitive model metadata, not the authorization
+  header. A saved provider key is reused only when both provider and endpoint
+  still match, so changing the destination cannot forward the old credential.
 - Request diagnostics redact token, authorization, password, secret, and
   credential fields. Raw MCP calls are held in process memory for the MCP
   Console and disappear on restart. They are not written to SQLite.
@@ -41,6 +45,9 @@ user uploads, saved research, or private matter data. Opinion text is treated
 as untrusted input. Model output is structurally validated, conclusions without
 a valid source-paragraph ID are discarded, and displayed evidence excerpts are
 copied from the CourtListener response rather than accepted from the model.
+Selecting Ollama Cloud therefore sends the public opinion text to Ollama's
+hosted API; selecting local Ollama keeps that provider hop on the configured
+server unless the chosen local model is itself a cloud shortcut.
 
 ## Certificate trust
 

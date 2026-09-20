@@ -263,6 +263,29 @@ test("secondary controls fail safely and administrative settings remain isolated
   await page.getByRole("button", { name: "Remove credential" }).click();
   await expect(page.getByText("CourtListener credential removed", { exact: true })).toBeVisible();
 
+  await page.route("**/api/connections/legal-ai/models", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        provider: "ollama",
+        baseUrl: "https://ollama.com",
+        fetchedAt: new Date().toISOString(),
+        models: [
+          { name: "gemma4:31b", displayName: "gemma4:31b", source: "cloud", size: null, family: "gemma", parameterSize: "31B", modifiedAt: null },
+          { name: "gpt-oss:120b", displayName: "gpt-oss:120b", source: "cloud", size: null, family: "gptoss", parameterSize: "116.8B", modifiedAt: null },
+        ],
+      }),
+    });
+  });
+  await expect(page.getByLabel("Ollama connection")).toHaveValue("cloud");
+  await page.getByLabel("Ollama Cloud API key").fill("fixture-ollama-cloud-key-not-real");
+  await page.getByRole("button", { name: "Load models" }).click();
+  await expect(page.getByText(/2 models available · 2 cloud/)).toBeVisible();
+  await page.getByLabel("Available model").selectOption("gpt-oss:120b");
+  await expect(page.getByLabel("Available model")).toHaveValue("gpt-oss:120b");
+  await page.unroute("**/api/connections/legal-ai/models");
+
   await page.getByLabel("Provider").selectOption("openai");
   await page.getByLabel("Backend endpoint").fill("http://example.com/v1");
   await page.getByLabel("API key", { exact: true }).fill("fixture-provider-key-not-real");

@@ -73,3 +73,7 @@ environment variables or mounted secret files. None belong in Git.
   authenticated settings users can configure it; remote endpoints must use
   HTTPS, and retrieved opinion text is sent there only when the user requests
   analysis. Deployments should use a provider approved for their practice.
+- Ollama model discovery runs through the authenticated backend. Catalog
+  responses are reduced to safe model metadata, while API keys remain in the
+  encrypted server-side provider configuration. Credential reuse is bound to
+  the exact provider and normalized endpoint.

@@ -22,7 +22,7 @@ import {
 import { SecurityManager, hashPassword, passwordStrengthProblem, redactSecrets } from "./security.js";
 import { PasswordStore } from "./password-store.js";
 import { TokenStore } from "./token-store.js";
-import { LegalAiConfigStore, normalizeLegalAiConfig } from "./ai-config-store.js";
+import { LegalAiConfigStore, normalizeLegalAiBaseUrl, normalizeLegalAiConfig } from "./ai-config-store.js";
 import { LegalAiClient } from "./legal-ai.js";
 import { analyzeOpinion, answerOpinionQuestion } from "./legal-analysis.js";
 
@@ -465,16 +465,42 @@ export function createApp(deps: AppDependencies): Express {
     res.json(await legalAi.status());
   });
 
+  app.post("/api/connections/legal-ai/models", security.requireCsrf, async (req, res) => {
+    try {
+      const body = objectBody(req.body);
+      if (body.provider !== "ollama") throw new Error("Model discovery is available only for Ollama connections");
+      const existing = await aiConfigStore.get();
+      const requestedKey = typeof body.apiKey === "string" ? body.apiKey.trim() : "";
+      const requestedBaseUrl = normalizeLegalAiBaseUrl(String(body.baseUrl ?? ""), "ollama");
+      const baseCandidate = normalizeLegalAiConfig({
+        provider: "ollama",
+        baseUrl: requestedBaseUrl,
+        model: "model-catalog",
+        apiKey: requestedKey || (existing?.provider === "ollama" && existing.baseUrl === requestedBaseUrl ? existing.apiKey : ""),
+      });
+      res.json(await legalAi.listOllamaModels(baseCandidate));
+    } catch (error) {
+      res.status(400).json({ error: redactSecrets(error instanceof Error ? error.message : String(error)) });
+    }
+  });
+
   app.put("/api/connections/legal-ai", security.requireCsrf, async (req, res) => {
     try {
       const body = objectBody(req.body);
       const existing = await aiConfigStore.get();
       const requestedKey = typeof body.apiKey === "string" ? body.apiKey.trim() : "";
+      const provider = String(body.provider ?? "") as "ollama" | "openai" | "anthropic";
+      if (!["ollama", "openai", "anthropic"].includes(provider)) throw new Error("Unsupported AI provider");
+      const requestedBaseUrl = normalizeLegalAiBaseUrl(String(body.baseUrl ?? ""), provider);
+      const savedKey = existing?.provider === provider
+        && existing.baseUrl === requestedBaseUrl
+        ? existing.apiKey
+        : "";
       const candidate = normalizeLegalAiConfig({
-        provider: body.provider,
-        baseUrl: body.baseUrl,
+        provider,
+        baseUrl: requestedBaseUrl,
         model: body.model,
-        apiKey: requestedKey || (existing && existing.provider === body.provider ? existing.apiKey : ""),
+        apiKey: requestedKey || savedKey,
       });
       await legalAi.test(candidate);
       await aiConfigStore.set(candidate);

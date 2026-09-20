@@ -58,7 +58,8 @@ Status meanings:
 | API Explorer | Every listed endpoint | Open | Known live endpoints sampled; endpoint-by-endpoint matrix remains open. |
 | Settings | CourtListener token show, rotate, remove | Accepted | Temporary fixture secret only; browser never receives the stored secret. |
 | Settings | Legal AI insecure-endpoint rejection | Accepted | Non-loopback HTTP configuration fails before any provider request. |
-| Settings | Legal AI successful connection/removal | Configuration blocked | Requires an approved provider credential; no real key is embedded in tests. |
+| Settings | Ollama Cloud/local catalog and model selection | Live + fixture accepted | Paid cloud catalog/chat smoke test passed; deterministic browser selects a returned cloud model without exposing a real key. |
+| Settings | Legal AI successful connection/removal | Backend live accepted | Paid Ollama catalog/chat and encrypted configuration paths pass; final deployed browser save/removal remains open. |
 | Settings | Password strength, change, session continuity | Accepted | Strong replacement, other-session revocation path, sign-out, and reauthentication pass. |
 | Failure UX | Seven CourtListener error categories | Backend accepted | Invalid request, authentication, rate limit, timeout, missing record, unavailable, and generic failure mappings are automated. |
 | Accessibility | Representative desktop/mobile WCAG checks | Accepted | No serious or critical findings in the current five-workflow suite. |

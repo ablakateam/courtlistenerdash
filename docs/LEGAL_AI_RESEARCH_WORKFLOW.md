@@ -105,9 +105,18 @@ authorities, limitations, and practical significance.
 ## Provider and privacy model
 
 The analysis connector is isolated from CourtListener credentials and saved
-research. It supports a loopback Ollama endpoint, an OpenAI-compatible API, or
-the Anthropic API. Configuration and API keys are encrypted at rest with
+research. It supports the direct paid Ollama Cloud API, a loopback Ollama
+service, another Ollama-compatible endpoint, an OpenAI-compatible API, or the
+Anthropic API. Configuration and API keys are encrypted at rest with
 AES-256-GCM and are never returned to the browser.
+
+For Ollama, the backend reads the selected endpoint's live `/api/tags` catalog
+and returns only safe model metadata to the settings screen. Direct Ollama
+Cloud model names are used exactly as returned by `https://ollama.com/api/tags`;
+local cloud shortcuts may have different names. The administrator can select a
+catalog model from a grouped dropdown or deliberately enter a model name when a
+compatible server does not expose a catalog. Changing the provider endpoint
+does not carry the previously encrypted key to the new host.
 
 The UI discloses that public opinion text will be sent to the selected provider.
 This feature does not send docket filings, user-uploaded documents, or private

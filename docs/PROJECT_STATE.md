@@ -63,7 +63,7 @@ These rules are architectural requirements, not optional design preferences:
 | Legal Research | Implemented and browser-tested | Uses collection-specific, schema-supported filters and CourtListener court choices. |
 | Semantic Search | Implemented and browser-tested | Searches CourtListener opinions semantically while preserving explicit research intent. |
 | Cases and opinions | Implemented and browser-tested | Consolidated workspace includes metadata, opinion reading, parties, authorities, related opinions, docket links, and oral records where available. |
-| AI case analysis | Implemented; provider configuration required | Long opinions are processed in sections; only source-linked conclusions render. No provider key is bundled. |
+| AI case analysis | Implemented; provider configuration required | Long opinions are processed in sections; only source-linked conclusions render. Settings discovers and groups live Ollama Cloud/local models without exposing the key. No provider key is bundled. |
 | PACER/RECAP research | Implemented and browser-tested | Searches CourtListener's RECAP archive and presents dockets, entries, parties, attorneys, documents, attachments, and available PDFs. Coverage may be incomplete. |
 | Paid PACER Fetch | **Not implemented** | Direct PACER credential submission and paid purchasing through `/recap-fetch/` require a separate security, fee-confirmation, sealed-record, and status-monitoring design. Read-only fetch records remain inspectable through generic MCP endpoints. |
 | RECAP Pray and Pay | Implemented behind explicit confirmation | Requests notification when an unavailable document is later contributed; it does not purchase the document. |
@@ -105,6 +105,7 @@ The current security baseline includes:
 - signed HTTP-only same-site sessions and separate CSRF protection;
 - AES-256-GCM encryption for CourtListener and optional AI credentials;
 - backend-only credential transport and diagnostic redaction;
+- endpoint-bound provider-key reuse and backend-only Ollama model discovery;
 - rate limiting for local authentication and API routes;
 - restricted secure CourtListener media/document URLs;
 - HTTPS-oriented private-network deployment;
@@ -119,9 +120,9 @@ See [SECURITY.md](../SECURITY.md) for the complete security model.
 | Gate | Accepted baseline |
 |---|---|
 | Type safety | Client and server TypeScript checks pass. |
-| Backend/security regression | 17 automated tests pass. |
+| Backend/security regression | 18 automated tests pass. |
 | Deterministic browser acceptance | Five focused workflows pass against CourtListener-shaped fixture data without spending API quota. |
-| Browser scope | Authentication, primary research flow, public-record workspaces, citation/alert/developer tools, all top-level routes, mobile navigation, recovery states, and administrative settings. |
+| Browser scope | Authentication, primary research flow, public-record workspaces, citation/alert/developer tools, all top-level routes, mobile navigation, recovery states, Ollama cloud-model selection, and administrative settings. |
 | Accessibility | Representative desktop and mobile workspaces have no serious or critical automated WCAG findings. |
 | Production build | Vite client and Node server build successfully. |
 | Container | The production Docker image builds in GitHub Actions. |
@@ -141,6 +142,10 @@ not replace deliberately paced live CourtListener acceptance.
 - Direct paid PACER Fetch is not implemented.
 - Optional AI analysis requires an administrator-approved provider and data-
   governance decision.
+- Paid Ollama Cloud was live-verified on 2026-09-20 through its official model
+  catalog and chat APIs. Account billing and limits remain external to this
+  application; a successful paid-account probe is not a promise of unlimited
+  capacity.
 - Remaining live, responsive, performance, and action-level acceptance work is
   tracked in the [roadmap](ROADMAP.md) and public issue tracker.
 - A formal open-source license has not been selected. Public visibility alone
@@ -207,4 +212,3 @@ complete when:
 | MCP inventory and coverage matrix | CourtListener adds, removes, or changes a tool or endpoint mapping. |
 | QA audit and action ledger | A route, action, known record, or acceptance result changes. |
 | README and screenshots | Installation, public positioning, or a primary user workflow changes. |
-

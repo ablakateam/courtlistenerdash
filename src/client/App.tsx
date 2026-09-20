@@ -89,6 +89,7 @@ import type {
   SavedResearch,
   GroundedAnswer,
   GroundedClaim,
+  LegalAiModelCatalog,
   LegalAiStatus,
   SemanticResearchIntent,
   SourcePassage,
@@ -1999,11 +2000,15 @@ function SettingsPage() {
 function LegalAiSettings({ status, reload }: { status: LegalAiStatus | null; reload: () => void }) {
   const notify = useNotice();
   const [provider, setProvider] = useState<"ollama" | "openai" | "anthropic">(status?.provider ?? "ollama");
-  const [baseUrl, setBaseUrl] = useState(status?.baseUrl ?? "http://127.0.0.1:11434");
+  const [baseUrl, setBaseUrl] = useState(status?.baseUrl ?? "https://ollama.com");
   const [model, setModel] = useState(status?.model ?? "");
   const [apiKey, setApiKey] = useState("");
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [modelsBusy, setModelsBusy] = useState(false);
+  const [modelCatalog, setModelCatalog] = useState<LegalAiModelCatalog | null>(null);
+  const [modelsError, setModelsError] = useState<string | null>(null);
+  const [manualModel, setManualModel] = useState(false);
   useEffect(() => {
     if (!status?.configured) return;
     if (status.provider) setProvider(status.provider);
@@ -2012,9 +2017,56 @@ function LegalAiSettings({ status, reload }: { status: LegalAiStatus | null; rel
   }, [status?.configured, status?.provider, status?.baseUrl, status?.model]);
   function changeProvider(value: "ollama" | "openai" | "anthropic") {
     setProvider(value);
-    setBaseUrl(value === "ollama" ? "http://127.0.0.1:11434" : value === "anthropic" ? "https://api.anthropic.com/v1" : "https://api.openai.com/v1");
+    setBaseUrl(value === "ollama" ? "https://ollama.com" : value === "anthropic" ? "https://api.anthropic.com/v1" : "https://api.openai.com/v1");
     setModel(value === "anthropic" ? "claude-sonnet-4-5" : value === "openai" ? "gpt-5-mini" : "");
     setApiKey("");
+    setModelCatalog(null);
+    setModelsError(null);
+    setManualModel(false);
+  }
+  const normalizedBaseUrl = baseUrl.trim().replace(/\/$/, "");
+  const ollamaConnection = normalizedBaseUrl === "https://ollama.com"
+    ? "cloud"
+    : normalizedBaseUrl === "http://127.0.0.1:11434" || normalizedBaseUrl === "http://localhost:11434"
+      ? "local"
+      : "custom";
+  function changeOllamaConnection(value: string) {
+    if (value === "cloud") setBaseUrl("https://ollama.com");
+    else if (value === "local") setBaseUrl("http://127.0.0.1:11434");
+    else if (ollamaConnection !== "custom") setBaseUrl("https://");
+    setModel("");
+    setModelCatalog(null);
+    setModelsError(null);
+    setManualModel(false);
+  }
+  async function discoverModels() {
+    setModelsBusy(true);
+    setModelsError(null);
+    try {
+      const catalog = await post<LegalAiModelCatalog>("/api/connections/legal-ai/models", {
+        provider: "ollama",
+        baseUrl,
+        apiKey,
+      });
+      setModelCatalog(catalog);
+      const stillAvailable = catalog.models.some((entry) => entry.name === model);
+      if (!stillAvailable) setModel(catalog.models[0]?.name ?? "");
+      setManualModel(false);
+      if (!catalog.models.length) setModelsError("Ollama connected, but it did not return any selectable models. You can enter a model name manually.");
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : String(reason);
+      setModelsError(message);
+      notify({ kind: "error", message });
+    } finally { setModelsBusy(false); }
+  }
+  function selectModel(value: string) {
+    if (value === "__manual__") {
+      setManualModel(true);
+      setModel("");
+      return;
+    }
+    setManualModel(false);
+    setModel(value);
   }
   async function save(event: FormEvent) {
     event.preventDefault();
@@ -2037,17 +2089,37 @@ function LegalAiSettings({ status, reload }: { status: LegalAiStatus | null; rel
     finally { setBusy(false); }
   }
   const statusLabel = status?.configured ? status.available ? "Connected" : status.lastError ? "Needs attention" : "Configured" : "Not configured";
+  const cloudModels = modelCatalog?.models.filter((entry) => entry.source === "cloud") ?? [];
+  const localModels = modelCatalog?.models.filter((entry) => entry.source === "local") ?? [];
+  const catalogContainsModel = modelCatalog?.models.some((entry) => entry.name === model) ?? false;
+  const savedKeyApplies = Boolean(status?.configured && status.provider === provider && status.baseUrl?.replace(/\/$/, "") === normalizedBaseUrl);
+  const apiKeyRequired = provider !== "ollama" || ollamaConnection === "cloud";
   return <section className="connection-panel panel ai-settings" id="legal-ai">
     <div className="connection-hero"><div className="connection-logo ai-logo"><Sparkles size={25} /></div><div><span className="eyebrow">Optional grounded analysis layer</span><h2>Legal AI Connection</h2><p>Used only after CourtListener retrieves the authoritative opinion.</p></div><StatusPill status={statusLabel} /></div>
     <div className="connection-details"><div><small>Provider</small><strong>{status?.provider ? humanize(status.provider) : "Not selected"}</strong></div><div><small>Model</small><strong>{status?.model || "Not selected"}</strong></div><div><small>Endpoint</small><strong>{status?.baseUrl || "Backend only"}</strong></div><div><small>Last check</small><strong>{status?.lastCheckedAt ? formatDate(status.lastCheckedAt) : "Never"}</strong></div></div>
     {status?.lastError && <div className="banner error"><AlertTriangle size={16} />{status.lastError}</div>}
     <form className="ai-config-form" onSubmit={save}>
-      <label>Provider<select value={provider} onChange={(event) => changeProvider(event.target.value as "ollama" | "openai" | "anthropic")}><option value="ollama">Ollama / local compatible</option><option value="openai">OpenAI-compatible API</option><option value="anthropic">Anthropic API</option></select></label>
-      <label>Backend endpoint<input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} spellCheck={false} placeholder="https://api.openai.com/v1" /></label>
-      <label>Model<input value={model} onChange={(event) => setModel(event.target.value)} spellCheck={false} placeholder={provider === "ollama" ? "Local or Ollama cloud model name" : "Provider model name"} /></label>
-      <label htmlFor="legal-ai-api-key">{provider === "ollama" ? "API key (only if required)" : "API key"}</label><div className="secret-input"><input id="legal-ai-api-key" type={show ? "text" : "password"} value={apiKey} onChange={(event) => setApiKey(event.target.value)} autoComplete="off" spellCheck={false} placeholder={status?.configured && status.provider === provider ? "Leave blank to keep the encrypted key" : "Paste provider key"} /><button type="button" className="text-button" aria-label={`${show ? "Hide" : "Show"} legal AI key`} onClick={() => setShow((value) => !value)}>{show ? "Hide" : "Show"}</button></div>
+      <label>Provider<select value={provider} onChange={(event) => changeProvider(event.target.value as "ollama" | "openai" | "anthropic")}><option value="ollama">Ollama (Cloud or local)</option><option value="openai">OpenAI-compatible API</option><option value="anthropic">Anthropic API</option></select></label>
+      {provider === "ollama" && <label>Ollama connection<select value={ollamaConnection} onChange={(event) => changeOllamaConnection(event.target.value)}><option value="cloud">Ollama Cloud (paid API)</option><option value="local">Local Ollama service</option><option value="custom">Other compatible endpoint</option></select></label>}
+      <label>Backend endpoint<input value={baseUrl} onChange={(event) => { setBaseUrl(event.target.value); setModelCatalog(null); setModelsError(null); }} spellCheck={false} placeholder="https://api.openai.com/v1" /></label>
+      {provider === "ollama" ? <div className="ai-model-picker">
+        <div className="ai-model-heading"><label htmlFor="legal-ai-model">Available model</label><button type="button" className="secondary compact" disabled={modelsBusy || !baseUrl.trim()} onClick={() => void discoverModels()}>{modelsBusy ? <LoaderCircle className="spin" size={14} /> : <RefreshCw size={14} />}{modelCatalog ? "Refresh models" : "Load models"}</button></div>
+        <select id="legal-ai-model" value={manualModel ? "__manual__" : model} onChange={(event) => selectModel(event.target.value)}>
+          <option value="">{modelsBusy ? "Loading available models…" : "Load models to choose"}</option>
+          {model && !catalogContainsModel && !manualModel && <option value={model}>{model} (saved selection)</option>}
+          {cloudModels.length > 0 && <optgroup label="Ollama Cloud">{cloudModels.map((entry) => <option key={entry.name} value={entry.name}>{entry.displayName}{entry.parameterSize ? ` · ${entry.parameterSize}` : ""}</option>)}</optgroup>}
+          {localModels.length > 0 && <optgroup label="Local models">{localModels.map((entry) => <option key={entry.name} value={entry.name}>{entry.displayName}{entry.parameterSize ? ` · ${entry.parameterSize}` : ""}</option>)}</optgroup>}
+          <option value="__manual__">Enter another model name…</option>
+        </select>
+        {manualModel && <label htmlFor="legal-ai-manual-model" className="manual-model-label">Model name<input id="legal-ai-manual-model" value={model} onChange={(event) => setModel(event.target.value)} spellCheck={false} placeholder="Model name returned by Ollama" /></label>}
+        {modelsError && <small className="field-note invalid">{modelsError}</small>}
+        {modelCatalog && !modelsError && <small className="field-note valid">{modelCatalog.models.length} models available · {cloudModels.length} cloud · checked {formatDate(modelCatalog.fetchedAt)}</small>}
+        {!modelCatalog && !modelsError && <small className="field-note">Load the live catalog from this endpoint. Manual entry remains available for compatible servers.</small>}
+      </div> : <label>Model<input value={model} onChange={(event) => setModel(event.target.value)} spellCheck={false} placeholder="Provider model name" /></label>}
+      <div className="ai-key-field"><label htmlFor="legal-ai-api-key">{provider === "ollama" && ollamaConnection === "cloud" ? "Ollama Cloud API key" : provider === "ollama" ? "API key (only if required)" : "API key"}</label><div className="secret-input"><input id="legal-ai-api-key" type={show ? "text" : "password"} value={apiKey} onChange={(event) => setApiKey(event.target.value)} autoComplete="off" spellCheck={false} placeholder={savedKeyApplies ? "Leave blank to keep the encrypted key" : "Paste provider key"} /><button type="button" className="text-button" aria-label={`${show ? "Hide" : "Show"} legal AI key`} onClick={() => setShow((value) => !value)}>{show ? "Hide" : "Show"}</button></div></div>
+      {provider === "ollama" && <div className="ollama-connection-note"><strong>{ollamaConnection === "cloud" ? "Ollama Cloud" : ollamaConnection === "local" ? "Local Ollama" : "Compatible endpoint"}</strong><span>{ollamaConnection === "cloud" ? "The backend connects directly to Ollama Cloud. The API key never reaches browser storage." : ollamaConnection === "local" ? "The backend uses the Ollama service running on this host. Cloud shortcuts work only when that service is signed in." : "Use an HTTPS endpoint, or a loopback HTTP endpoint on this server."}</span></div>}
       <div className="ai-data-notice"><ShieldCheck size={17} /><p><strong>Grounding and privacy boundary</strong> Opinion text retrieved from CourtListener is sent to this configured provider for analysis. Keys stay backend-only and encrypted with AES-256-GCM. No docket filing or private material is sent by this feature. Use only a provider approved for your practice.</p></div>
-      <div className="button-row"><button className="primary" disabled={busy || !model.trim() || !baseUrl.trim() || (provider !== "ollama" && !apiKey.trim() && !(status?.configured && status.provider === provider))}>{busy ? <LoaderCircle className="spin" size={16} /> : <Sparkles size={16} />}{status?.configured ? "Validate and update" : "Validate and connect"}</button>{status?.configured && <button type="button" className="danger" disabled={busy} onClick={() => void remove()}><Trash2 size={16} />Remove AI connection</button>}</div>
+      <div className="button-row"><button className="primary" disabled={busy || !model.trim() || !baseUrl.trim() || (apiKeyRequired && !apiKey.trim() && !savedKeyApplies)}>{busy ? <LoaderCircle className="spin" size={16} /> : <Sparkles size={16} />}{status?.configured ? "Validate and update" : "Validate and connect"}</button>{status?.configured && <button type="button" className="danger" disabled={busy} onClick={() => void remove()}><Trash2 size={16} />Remove AI connection</button>}</div>
     </form>
   </section>;
 }

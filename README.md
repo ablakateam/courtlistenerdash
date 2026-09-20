@@ -141,6 +141,15 @@ reasoning point must carry an exact passage reference that the lawyer can open
 in the opinion. If the evidence cannot be tied back to the source, it is not
 shown as a grounded conclusion.
 
+The optional provider connection supports paid
+[Ollama Cloud](https://docs.ollama.com/cloud), a loopback Ollama service,
+OpenAI-compatible endpoints, and Anthropic. In **Settings → Legal AI
+Connection**, choose the Ollama connection type, load the live model catalog,
+and select a model from the dropdown. The catalog and analysis requests are
+made by the backend; an Ollama Cloud key is encrypted at rest and is never
+returned to the browser. Manual model entry remains available for compatible
+endpoints that do not publish a catalog.
+
 Important limits remain visible:
 
 - CourtListener and RECAP are broad public archives, but their coverage is not
@@ -179,6 +188,11 @@ appears; only a one-way password hash is retained. Then:
 4. Open **Settings → CourtListener Connection** and paste the API token.
 5. The backend validates and encrypts the token. It is never returned to the
    browser or embedded in frontend JavaScript.
+
+To enable optional grounded case analysis with Ollama Cloud, open **Settings →
+Legal AI Connection**, select **Ollama Cloud (paid API)**, paste a backend API
+key, choose **Load models**, select an available model, and validate the
+connection. Provider billing and account limits remain managed by Ollama.
 
 For Ubuntu/systemd, reverse-proxy, certificate, backup, upgrade, and generic
 cloud-container instructions, read the [deployment guide](docs/DEPLOYMENT.md).
