@@ -73,3 +73,33 @@ authentication error. The direct Cloud credential succeeded. A displayed
 model name is therefore not treated as proof of usable inference; the selected
 endpoint and model must pass validation together before the application saves
 them.
+
+## Page-aware legal assistant follow-up acceptance
+
+Revision `2432fed` added the persistent, page-aware Legal Research Assistant.
+The assistant is an optional analysis layer: CourtListener remains the source
+of legal records, and the configured provider receives page material only when
+the researcher submits a question.
+
+| Check | Observed result | Status |
+|---|---|---|
+| Persistent interface | The accepted browser bundle contains the assistant launcher and panel on authenticated application pages | Passed |
+| Current-page grounding | Answers expose verified source references derived from the submitted page snapshot, not model-authored quotation text | Passed |
+| Protected pages | Settings, MCP Console, API Explorer, alerts, saved research, and RECAP-document routes discard captured body text server-side | Passed |
+| Complete-opinion boundary | The interface distinguishes current-page help from the separate complete-opinion analysis workflow | Passed |
+| Live provider behavior | The configured `gemma4:31b` model answered a known-opinion prompt with an accurate holding, an exact source excerpt, and a snapshot-scope caveat | Passed |
+| Paid-call protection | Each authenticated session permits only one active assistant request | Passed |
+| Encrypted configuration | The existing provider configuration survived installation as a service-owned 0600 encrypted envelope | Passed |
+| Automated regression gate | 21 server/security tests and all six browser workflows passed | Passed |
+| Accessibility | Desktop and mobile scans found no serious or critical issues after contrast corrections | Passed |
+| GitHub verification | Application verification and container jobs passed for the exact feature revision | Passed |
+| Installed artifacts | The deployed server contains the assistant module and serves the accepted assistant-enabled frontend bundle | Passed |
+| Service isolation | The standalone dashboard restarted cleanly while the separately running Ollama service remained active | Passed |
+| Private-network availability | Loopback and all configured private-network HTTPS health paths returned HTTP 200 | Passed |
+
+The assistant excludes form controls, raw technical payloads, hidden content,
+and its own conversation from browser capture. Public case, docket, oral
+argument, judge, and disclosure information may be used when it is visibly
+rendered, but filing text from RECAP document pages is not captured. The UI
+discloses this boundary before a question is sent and links source references
+back to visible page content where possible.
