@@ -8,6 +8,9 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Added
 
+- Canonical project-state record covering capabilities, integration boundaries,
+  verification evidence, known limitations, documentation ownership, and the
+  definition of done for future features.
 - Repeatable, read-only live MCP audit command with known-record checks and
   account-rate-aware pacing.
 - Dedicated oral-argument record workspace with secure CourtListener audio,

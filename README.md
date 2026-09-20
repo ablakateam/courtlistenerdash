@@ -203,6 +203,7 @@ cloud-container instructions, read the [deployment guide](docs/DEPLOYMENT.md).
 This repository keeps product decisions and verification evidence beside the
 code:
 
+- [Canonical project state and feature-change protocol](docs/PROJECT_STATE.md)
 - [Roadmap and milestones](docs/ROADMAP.md)
 - [Current product-hardening audit](docs/qa/2026-09-19-product-hardening-audit.md)
 - [Latest private-LAN deployment acceptance](docs/qa/2026-09-20-deployment-acceptance.md)

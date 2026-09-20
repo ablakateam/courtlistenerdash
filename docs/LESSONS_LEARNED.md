@@ -185,3 +185,36 @@ true, but their combination could cause the wrong request to appear successful.
 
 Action: clear result and timing state at the start of a new operation. On
 failure, show only the failure and an explicit recovery path.
+
+## 2026-09-20 — Public release hygiene includes unreachable history
+
+Removing a file from the current branch or force-pushing a new root does not
+guarantee that earlier objects are immediately unreachable through a hosting
+provider. A repository can look clean in ordinary navigation while an earlier
+commit remains accessible to somebody who knows its identifier.
+
+Action: when development history is intentionally private, publish from a clean
+repository object database, verify prior identifiers without authentication,
+and retain the detailed history only in a protected private archive.
+
+## 2026-09-20 — Repository automation starts before publication
+
+Dependency automation can run and open update pull requests as soon as its
+configuration lands in a newly created repository, even while the repository
+is still being prepared.
+
+Action: update supported dependencies and encode intentional major-version
+holds before the final repository is created. Delete transient preparation runs
+and verify the public repository's issues, pull requests, refs, and Actions
+history as part of the release gate.
+
+## 2026-09-20 — Project memory needs one canonical handoff
+
+A roadmap, changelog, architecture record, tool inventory, and QA ledger answer
+different questions. Without a canonical current-state document, a future
+feature can be designed from an outdated fragment or silently cross a security
+or product boundary.
+
+Action: maintain `docs/PROJECT_STATE.md` as the current handoff. Every feature
+must update it when capabilities, boundaries, verification evidence, known
+limitations, or release decisions change.

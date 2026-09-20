@@ -4,7 +4,8 @@
 
 Status: **Complete**
 
-- Private GitHub repository and protected secret boundary
+- Public GitHub repository with a clean release baseline and protected secret
+  boundary
 - Reproducible Node and Docker builds
 - Docker Compose with local HTTPS
 - Hardened Ubuntu/systemd deployment retained
@@ -65,13 +66,15 @@ workflow in the audit record passes end to end.
 
 ## Milestone 3 — Production readiness
 
-Status: **Planned**
+Status: **In progress**
 
+- Clean public repository snapshot, CI baseline, dependency automation, and
+  security scanning
 - Backup/restore drill for encrypted credentials and research data
 - Structured application logs and operational health dashboard
 - Release version, signed tag, release notes, and rollback rehearsal
 - Public deployment guide validation on at least two independent platforms
-- Open-source license selection and public-release review
+- Open-source license selection and licensed release review
 
 ## Milestone 4 — Advanced attorney workflows
 
