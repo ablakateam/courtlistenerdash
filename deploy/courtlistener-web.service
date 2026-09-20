@@ -1,0 +1,41 @@
+[Unit]
+Description=CourtListenerDash Legal Intelligence Platform
+Documentation=https://github.com/freelawproject/courtlistener-api-client/blob/main/MCP_README.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=courtlistener-web
+Group=courtlistener-web
+WorkingDirectory=/opt/courtlistener-web/current
+Environment=NODE_ENV=production
+EnvironmentFile=/etc/courtlistener-web/app.env
+ExecStart=/usr/bin/node /opt/courtlistener-web/current/dist-server/server/index.js
+Restart=on-failure
+RestartSec=5s
+TimeoutStartSec=30s
+TimeoutStopSec=20s
+UMask=0077
+
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectKernelLogs=true
+ProtectHostname=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+ReadWritePaths=/var/lib/courtlistener-web
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,46 @@
+{
+  "name": "courtlistenerdash",
+  "version": "1.2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n server,web -c cyan,magenta \"tsx watch src/server/index.ts\" \"vite --host 127.0.0.1\"",
+    "build": "tsc -p tsconfig.server.json && vite build",
+    "start": "node dist-server/server/index.js",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:e2e": "playwright test",
+    "check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.server.json",
+    "credential": "tsx src/server/credential-cli.ts",
+    "setup": "node deploy/bootstrap.mjs",
+    "audit:live": "node scripts/audit-live.mjs",
+    "review:server": "node scripts/start-review-server.mjs",
+    "fixture:server": "node scripts/start-fixture-server.mjs",
+    "test:e2e:fixture": "npm run build && COURTLISTENER_E2E_FIXTURE=1 playwright test tests/e2e/fixture-workflow.spec.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "dompurify": "^3.4.15",
+    "express": "5.2.1",
+    "helmet": "8.3.0",
+    "lucide-react": "1.47.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-router-dom": "7.18.4"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "6.1.1",
+    "concurrently": "^10.0.5",
+    "tsx": "^4.21.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.0"
+  }
+}
