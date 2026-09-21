@@ -1,7 +1,7 @@
 # UI readability and responsive-platform audit
 
-Date: **2026-09-20**  
-Version: **1.4.0**  
+Date: **2026-09-20**<br>
+Version: **1.4.1**<br>
 Status: **Accepted for the current public-preview baseline**
 
 ## Purpose
@@ -31,9 +31,13 @@ were not refactored.
 
 ## Responsive organization
 
+- The authenticated application frame is locked to the visible browser
+  viewport. The header and navigation remain stable while only the legal-
+  research pane scrolls, so a long case no longer stretches the entire shell.
 - Desktop navigation is wider so full legal-workflow labels remain legible.
-- At narrower laptop widths, secondary header labels collapse while every
-  function remains available through an accessible name.
+- At narrower laptop widths, navigation becomes a drawer before it can squeeze
+  the research pane; secondary header labels collapse while every function
+  remains available through an accessible name.
 - On phones, the header becomes two rows: menu, usage, text size, and connection
   status remain on the first row; global search receives the full second row.
 - Tables, citation graphs, opinion tabs, and selectors scroll inside their own
@@ -54,6 +58,21 @@ were not refactored.
    directive; native HTTPS and trusted-proxy deployments retain it.
 5. Fixture password rotation was restored at the end of its test so one browser
    engine cannot contaminate the next engine's acceptance run.
+6. The earlier overflow check ran before some asynchronous workspaces finished
+   rendering and measured only width. It now waits for each route's real loaded
+   heading and checks the complete shell geometry, internal research-pane
+   overflow, header collisions, and viewport height.
+7. The application shell grew to the document's full content height after a
+   refresh. The shell now uses the dynamic viewport height and places scrolling
+   in the research pane; changing routes resets that pane to the top.
+8. A 1024-pixel laptop kept the full 280-pixel navigation rail, leaving only
+   744 pixels for legal content. The drawer breakpoint now preserves the full
+   research width on compact laptops and tablets.
+9. Hidden mobile navigation links remained keyboard-focusable. The closed
+   drawer is now removed from focus, exposes expanded state, has a visible close
+   control, closes with Escape, and pauses background-pane scrolling.
+10. Route-wide WCAG scanning found low-contrast semantic-workflow and Jev metric
+    labels, plus an unnamed API Explorer endpoint selector. All were corrected.
 
 ## Automated acceptance
 
@@ -64,11 +83,14 @@ CourtListener, TypeSafe, or legal-AI quota.
 |---|---|
 | Chromium legal workflow regression | Six complete workflows passed |
 | Cross-engine responsive/readability workflow | Passed in Chromium, Firefox, and WebKit |
-| Viewport matrix | 1440×900, 1024×768, 768×1024, and 390×844 passed |
-| Page-level horizontal overflow | Absent on Dashboard, case, RECAP docket, Jev Decision Lab, and Settings at every tested size |
+| Viewport matrix | 1920×1080, 1366×768, 1280×800, both sides of the 1180/1181 navigation breakpoint, 1024×768, 768×1024, high-zoom 683×384, 390×844, and 320×568 passed |
+| Route coverage | All 22 top-level and known-record detail routes passed the loaded-state shell audit in Chromium; representative workspaces passed in Firefox and WebKit |
+| Page-level overflow | No document-level horizontal or vertical shell overflow; long records scroll inside the bounded research pane |
+| Header geometry | No overlapping header controls in any accepted viewport/text-size combination |
 | Text-size persistence | Extra large resolves to 20px root size and survives reload |
 | Minimum sampled case text | Metadata ≥13px, supporting text ≥14px, opinion text ≥17px at Standard |
-| Automated accessibility | No serious or critical WCAG A/AA findings on the enlarged phone case workspace |
+| Automated accessibility | No serious or critical WCAG A/AA findings across all 22 loaded routes at the common-laptop viewport or on the enlarged phone case workspace |
+| Mobile navigation | Hidden when closed, keyboard state announced, Escape/close-button behavior accepted, and background pane locked while open |
 | TypeScript and production build | Passed |
 
 The full browser command runs **nine accepted tests**: seven Chromium tests

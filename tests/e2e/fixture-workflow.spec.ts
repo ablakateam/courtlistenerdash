@@ -21,7 +21,7 @@ async function expectAccessible(page: Page) {
 }
 
 async function capture(page: Page, name: string) {
-  if (captureScreenshots) await page.screenshot({ path: `docs/images/${name}.png`, fullPage: true, animations: "disabled" });
+  if (captureScreenshots) await page.screenshot({ path: `docs/images/${name}.png`, fullPage: false, animations: "disabled" });
 }
 
 test("research moves from a question to a grounded case and saved authority", async ({ page }) => {
@@ -238,8 +238,18 @@ test("all top-level routes and mobile navigation remain reachable", async ({ pag
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
-  await page.locator(".mobile-menu").click();
+  const mobileMenu = page.getByRole("button", { name: "Open navigation" });
+  await mobileMenu.click();
+  await expect(mobileMenu).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByRole("link", { name: "Legal Research" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Close navigation" })).toBeVisible();
+  await expect(page.locator(".content")).toHaveCSS("overflow-y", "hidden");
+  await page.keyboard.press("Escape");
+  await expect(mobileMenu).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#primary-navigation")).toHaveCSS("visibility", "hidden");
+  await mobileMenu.click();
+  await page.getByRole("button", { name: "Close navigation" }).click();
+  await expect(page.locator("#primary-navigation")).toHaveCSS("visibility", "hidden");
   await expectAccessible(page);
 });
 

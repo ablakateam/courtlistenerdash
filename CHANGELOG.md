@@ -88,8 +88,22 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Changed
 
-- The application version advances to 1.4.0 for the accessibility-first
-  reading and cross-browser responsive milestone.
+- The application version advances to 1.4.1 for the viewport-shell and loaded-
+  state UI hardening milestone.
+- The authenticated shell now fits the dynamic browser viewport while the
+  legal-research pane scrolls independently; route changes return that pane to
+  the top instead of preserving an unrelated page position.
+- Compact laptops and tablets now use an accessible navigation drawer before
+  the permanent sidebar can squeeze legal content. The drawer announces its
+  state, closes by button or Escape, leaves no hidden focus targets, and pauses
+  background scrolling.
+- The responsive gate now waits for fully loaded content across all 22 top-
+  level and known-record detail routes, checks viewport height and header
+  collisions as well as width, covers high zoom and 320-pixel screens, and
+  performs route-wide serious/critical WCAG checks.
+- Semantic-search workflow labels and Jev metrics now meet AA contrast, the API
+  endpoint selector has an accessible name, and overflowing workspace tabs
+  expose a visible local scrollbar.
 - Legal metadata, tables, helper text, navigation, Jev intelligence, and the
   page-aware assistant now use a shared readable type scale instead of
   scattered extra-small text.
@@ -229,3 +243,10 @@ under **Unreleased** until its production-readiness checks are complete.
   input tokens, retained the source excerpt/hash, and cost an estimated
   $0.000028 at the documented input rate. This connectivity check is not a
   legal-quality benchmark.
+- Version 1.4.1 passed 24 backend/security tests, type checks, a zero-finding
+  production dependency audit, and nine browser acceptances across Chromium,
+  Firefox, and WebKit. The loaded-state Chromium gate covered all 22 top-level
+  and known-record detail routes with route-wide WCAG and shell geometry checks.
+- The isolated 1.4.1 service and nginx remained active after installation;
+  native HTTPS, loopback proxy, and all three configured private-network health
+  paths returned HTTP 200 with version 1.4.1.

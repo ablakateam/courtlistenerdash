@@ -1,7 +1,7 @@
 # CourtListenerDash project state
 
 Last reviewed: **2026-09-20**<br>
-Application version: **1.4.0**<br>
+Application version: **1.4.1**<br>
 Lifecycle: **Public preview and active product hardening**
 
 This is the canonical handoff record for the project. Read it before planning a
@@ -62,7 +62,7 @@ These rules are architectural requirements, not optional design preferences:
 | Product area | Current state | Important boundary |
 |---|---|---|
 | Dashboard | Implemented and browser-tested | Shows connection health, request allowance, recent work, and saved research. |
-| Reading and responsive interface | Implemented and cross-engine tested | Standard, Large, and Extra large modes persist per browser; representative workspaces pass desktop, laptop, tablet, and phone containment in Chromium, Firefox, and WebKit. |
+| Reading and responsive interface | Implemented and cross-engine tested | The application shell fits the visible viewport and the legal-research pane scrolls independently. Standard, Large, and Extra large modes persist per browser; all 22 loaded routes pass the Chromium shell/contrast audit and representative workspaces pass desktop, laptop, tablet, high-zoom, and phone containment in Chromium, Firefox, and WebKit. |
 | Global Search | Implemented and browser-tested | Keeps incompatible CourtListener result types in separate tabs. |
 | Legal Research | Implemented and browser-tested | Uses collection-specific, schema-supported filters and CourtListener court choices. |
 | Semantic Search | Implemented and browser-tested | Searches CourtListener opinions semantically while preserving explicit research intent. |
@@ -130,7 +130,7 @@ See [SECURITY.md](../SECURITY.md) for the complete security model.
 | Type safety | Client and server TypeScript checks pass. |
 | Backend/security regression | 24 automated tests pass, including Jev encryption, reranking, provenance, cache, usage accounting, pinned-model enforcement, and fail-open result preservation. |
 | Deterministic browser acceptance | Nine accepted tests pass against CourtListener-shaped fixture data without spending CourtListener or AI-provider quota. |
-| Browser scope | Six complete product workflows and the responsive matrix run in Chromium; the focused readability/containment matrix also runs in Firefox and WebKit. Coverage includes authentication, primary research, public records, citation/alert/developer tools, all top-level routes, mobile navigation, recovery, optional-provider settings, assistant grounding, and protected-context exclusion. |
+| Browser scope | Six complete product workflows and the responsive matrix run in Chromium; the focused readability/containment matrix also runs in Firefox and WebKit. The loaded-state layout gate covers all 22 top-level and known-record detail routes at common laptop, compact laptop, and phone dimensions, plus representative wide-desktop, tablet, high-zoom, and minimum-phone checks. Coverage also includes authentication, primary research, public records, citation/alert/developer tools, mobile-drawer keyboard behavior, recovery, optional-provider settings, assistant grounding, and protected-context exclusion. |
 | Accessibility | Representative desktop and mobile workspaces have no serious or critical automated WCAG findings; standard legal metadata samples at ≥13px, supporting text at ≥14px, and opinion text at ≥17px. |
 | Production build | Vite client and Node server build successfully. |
 | Container | The production Docker image builds in GitHub Actions. |

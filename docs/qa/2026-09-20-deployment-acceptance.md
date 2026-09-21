@@ -158,3 +158,27 @@ The installer's first native HTTPS health attempt landed during the ordinary
 restart window and was refused; its built-in retry then completed. Independent
 post-restart validation used the supported nginx HTTPS route on loopback and
 each private-network interface. No unrelated application service was changed.
+
+## Viewport-shell hardening deployment acceptance
+
+Version **1.4.1** was installed after the loaded-state interface audit and its
+repeat regression cycle. Existing encrypted credentials, account configuration,
+research data, and optional-provider settings were preserved.
+
+| Check | Observed result | Status |
+|---|---|---|
+| Backend regression | 24 server/security tests passed | Passed |
+| Browser regression | Nine accepted tests passed: seven Chromium, one Firefox, and one WebKit | Passed |
+| Loaded route geometry | All 22 top-level and known-record detail routes fit the viewport shell without hidden horizontal content at laptop, compact-laptop, and phone sizes | Passed |
+| Extended layouts | Wide desktop, both sides of the navigation breakpoint, portrait/landscape tablet, high-zoom, and 320-pixel minimum checks passed | Passed |
+| Automated WCAG gate | No serious or critical findings across all 22 loaded common-laptop routes or the enlarged phone case workspace | Passed |
+| TypeScript and production build | Passed | Passed |
+| Dependency audit | No known production vulnerability | Passed |
+| Installed services | `courtlistener-web.service` and nginx active; service reports version 1.4.1 | Passed |
+| Native HTTPS health | `https://127.0.0.1:8788/healthz` returned HTTP 200 and version 1.4.1 | Passed |
+| Proxy and private-network health | Loopback plus `192.168.12.15`, `192.168.50.50`, and `192.168.2.19` returned HTTP 200 and version 1.4.1 | Passed |
+| Private-network UI | All three configured HTTPS addresses returned the built application | Passed |
+
+The first installer health probe again coincided with the normal service
+restart and was refused; the installer's bounded retry succeeded immediately
+after startup. The isolated release changed no unrelated service.

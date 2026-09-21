@@ -335,3 +335,38 @@ Action: retain insecure-request upgrading for native HTTPS and explicitly
 trusted reverse-proxy deployments, but omit it for direct HTTP loopback review
 servers. Run the focused responsive gate in all three browser engines so a
 blank-engine failure cannot hide behind Chromium-only acceptance.
+
+## 2026-09-20 — A width-only check can approve a broken application frame
+
+The first responsive gate checked document width immediately after navigation.
+It did not wait for route-specific asynchronous content, and it did not assert
+that the shell itself remained the height of the browser. The pages therefore
+passed even though a refreshed dashboard stretched the complete application to
+more than 1,300 pixels on a 768-pixel-tall laptop.
+
+Action: wait for a route-specific loaded heading, test the root, shell, header,
+main pane, and scrollable research pane separately, and assert both axes. Use a
+fixed viewport shell with one explicit content scroller; verify that a module
+change resets that scroller to the top.
+
+## 2026-09-20 — Responsive breakpoints must reflect usable content width
+
+A 1024-pixel viewport looked like a laptop to the stylesheet, but the permanent
+280-pixel navigation rail left only 744 pixels for the actual legal workspace.
+Extra-large text made the result visibly cramped even though no element crossed
+the document boundary.
+
+Action: choose navigation breakpoints from the remaining research-pane width,
+not device labels. Test each breakpoint with the largest supported text scale,
+and keep icon-only compact states accessible without making them the default
+when explanatory text still fits.
+
+## 2026-09-20 — Off-canvas navigation is not hidden when it can still receive focus
+
+Translating a drawer off screen removed it visually but left every link in the
+keyboard order. It also allowed the research pane to move behind the open
+drawer.
+
+Action: pair the transform with visibility semantics, announce expanded state,
+provide an in-drawer close control and Escape handling, and lock the background
+scroller while the drawer is open. Test behavior, not only appearance.

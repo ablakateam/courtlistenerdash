@@ -78,10 +78,13 @@ the choice stays with that browser across pages and future visits.
 The same research hierarchy adapts to desktop, laptop, tablet, and phone
 screens. On a phone, global search receives its own row, case metadata becomes
 a readable sequence, toolbars wrap into large targets, and wide legal tables or
-graphs scroll inside their own panels. Core responsive layouts are continuously
-checked in Chromium, Firefox, and WebKit—the browser engine used by Safari.
-This automated coverage complements, but does not replace, native screen-reader
-and physical-device review.
+graphs scroll inside their own panels. The application frame stays fitted to
+the visible browser while the legal-research pane scrolls; compact laptops use
+a keyboard-accessible navigation drawer rather than sacrificing reading width.
+All 22 top-level and known-record detail routes are checked after their data has
+loaded, with representative layouts repeated in Chromium, Firefox, and
+WebKit—the browser engine used by Safari. This automated coverage complements,
+but does not replace, native screen-reader and physical-device review.
 
 ## What can I do with it?
 

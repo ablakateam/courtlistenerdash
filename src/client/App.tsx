@@ -441,6 +441,7 @@ function Layout({ children, onLogout }: { children: ReactNode; onLogout: () => v
   const [mobileOpen, setMobileOpen] = useState(false);
   const [globalQuery, setGlobalQuery] = useState("");
   const [readingSize, setReadingSize] = useState<ReadingSize>(storedReadingSize);
+  const contentRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const status = useLoad(() => api<ConnectionStatus & { tls: boolean }>("/api/status"), [location.pathname]);
@@ -454,19 +455,31 @@ function Layout({ children, onLogout }: { children: ReactNode; onLogout: () => v
     try { window.localStorage.setItem("courtlistenerdash-reading-size", readingSize); } catch { /* Browser storage can be unavailable in hardened privacy modes. */ }
   }, [readingSize]);
   useEffect(() => setMobileOpen(false), [location.pathname]);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileOpen]);
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname, location.search]);
   function globalSubmit(event: FormEvent) {
     event.preventDefault();
     if (globalQuery.trim()) navigate(`/research?mode=global&q=${encodeURIComponent(globalQuery.trim())}`);
   }
   return (
-    <div className={`app-shell ${collapsed ? "nav-collapsed" : ""}`}>
-      <aside className={`sidebar ${mobileOpen ? "mobile-open" : ""}`}>
+    <div className={`app-shell ${collapsed ? "nav-collapsed" : ""} ${mobileOpen ? "mobile-nav-open" : ""}`}>
+      <aside id="primary-navigation" className={`sidebar ${mobileOpen ? "mobile-open" : ""}`}>
         <div className="brand">
           <div className="brand-mark"><Scale size={21} /></div>
           {!collapsed && <div><strong>CourtListenerDash</strong><span>Legal Intelligence</span></div>}
           <button className="icon-button desktop-only" onClick={() => setCollapsed((value) => !value)} title="Toggle navigation">
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>
+          <button className="icon-button mobile-nav-close" onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={20} /></button>
         </div>
         <nav>
           {navGroups.map((group) => group.label === "Advanced" && !collapsed ? (
@@ -492,7 +505,7 @@ function Layout({ children, onLogout }: { children: ReactNode; onLogout: () => v
       {mobileOpen && <button className="mobile-scrim" onClick={() => setMobileOpen(false)} aria-label="Close menu" />}
       <div className="main-column">
         <header className="topbar">
-          <button className="icon-button mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20} /></button>
+          <button className="icon-button mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Open navigation" aria-controls="primary-navigation" aria-expanded={mobileOpen}><Menu size={20} /></button>
           <form className="global-search" onSubmit={globalSubmit}>
             <Search size={18} />
             <input
@@ -522,7 +535,7 @@ function Layout({ children, onLogout }: { children: ReactNode; onLogout: () => v
             <span>{status.data?.mcp === "connected" ? "Connected" : "Connect"}</span>
           </Link>
         </header>
-        <main className="content">{children}</main>
+        <main className="content" ref={contentRef}>{children}</main>
       </div>
       <PageAssistant aiStatus={status.data?.legalAi ?? null} />
     </div>
@@ -2005,7 +2018,7 @@ function ApiExplorer() {
   return (
     <>
       <PageHeader eyebrow="Developer inspection" title="CourtListener API Explorer" description="Inspect read-only REST resources through the official MCP call_endpoint layer. This technical view complements the polished research workspaces." />
-      <div className="api-request panel"><div className="request-line"><span className="method">GET</span><span>https://www.courtlistener.com/api/rest/v4/</span><select value={endpoint} onChange={(event) => { setEndpoint(event.target.value); setSchema(null); setResult(null); }}>{endpointOptions.map((value) => <option key={value}>{value}</option>)}</select><span>/</span></div><div className="api-actions"><button className="secondary" onClick={() => void loadSchema()}><Code2 size={16} />Load schema</button>{duration !== null && <span>{duration} ms</span>}</div></div>
+      <div className="api-request panel"><div className="request-line"><span className="method">GET</span><span>https://www.courtlistener.com/api/rest/v4/</span><select aria-label="CourtListener API endpoint" value={endpoint} onChange={(event) => { setEndpoint(event.target.value); setSchema(null); setResult(null); }}>{endpointOptions.map((value) => <option key={value}>{value}</option>)}</select><span>/</span></div><div className="api-actions"><button className="secondary" onClick={() => void loadSchema()}><Code2 size={16} />Load schema</button>{duration !== null && <span>{duration} ms</span>}</div></div>
       <div className="two-column api-columns"><section className="panel"><div className="panel-heading"><div><span className="eyebrow">Request</span><h2>Query parameters</h2></div></div><form className="console-form" onSubmit={execute}><label>Filters (JSON)<textarea spellCheck={false} rows={14} value={query} onChange={(event) => setQuery(event.target.value)} /></label><button className="primary" disabled={busy}>{busy ? <LoaderCircle className="spin" size={16} /> : <Play size={16} />}Execute read-only request</button></form>{schema !== null && <><h3>Endpoint schema</h3><JsonBlock value={schema} /></>}</section><section className="panel"><div className="panel-heading"><div><span className="eyebrow">Response</span><h2>Raw CourtListener data</h2></div>{result !== null && <StatusPill status="200 via MCP" />}</div>{error && <div className="inline-error"><AlertTriangle size={16} />{error}</div>}{result !== null ? <JsonBlock value={result} /> : <EmptyState icon={<Code2 />} title="No request executed" detail="Choose an endpoint, inspect its live schema, and send supported filters." />}</section></div>
     </>
   );

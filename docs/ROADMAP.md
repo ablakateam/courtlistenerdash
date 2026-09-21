@@ -36,6 +36,14 @@ Status: **In progress**
       bounded opinion measure, and desktop/laptop/tablet/phone overflow gate
 - [x] Run the focused responsive/readability matrix in Chromium, Firefox, and
       WebKit and keep it in continuous integration
+- [x] Fit the authenticated shell to the dynamic viewport, isolate long-record
+      scrolling in the research pane, and reset the pane on route changes
+- [x] Wait for fully loaded content and audit all 22 top-level/detail routes for
+      shell overflow, header collisions, and serious/critical WCAG findings
+- [x] Accept wide desktop, common and compact laptops, portrait/landscape
+      tablets, high desktop zoom, phone, and 320-pixel minimum layouts
+- [x] Remove closed mobile navigation from the focus order and accept its
+      expanded state, close control, Escape handling, and background lock
 - [x] Distinguish minute, hour, and day throttles without long hourly waits
 - [x] Add local retry controls to primary legal-record workspaces
 - [x] Add a quota-free browser acceptance suite to continuous integration

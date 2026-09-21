@@ -200,7 +200,7 @@ const fakeMcp = {
 const passwordHash = await hashPassword(password);
 const credentialKey = randomBytes(32).toString("base64");
 const config = {
-  version: "1.4.0-fixture",
+  version: "1.4.1-fixture",
   host: "127.0.0.1",
   port,
   publicPort: port,
