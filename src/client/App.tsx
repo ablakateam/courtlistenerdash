@@ -425,10 +425,22 @@ const navGroups = [
   },
 ] as const;
 
+type ReadingSize = "standard" | "large" | "extra-large";
+
+function storedReadingSize(): ReadingSize {
+  try {
+    const stored = window.localStorage.getItem("courtlistenerdash-reading-size");
+    return stored === "large" || stored === "extra-large" ? stored : "standard";
+  } catch {
+    return "standard";
+  }
+}
+
 function Layout({ children, onLogout }: { children: ReactNode; onLogout: () => void }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [globalQuery, setGlobalQuery] = useState("");
+  const [readingSize, setReadingSize] = useState<ReadingSize>(storedReadingSize);
   const navigate = useNavigate();
   const location = useLocation();
   const status = useLoad(() => api<ConnectionStatus & { tls: boolean }>("/api/status"), [location.pathname]);
@@ -437,6 +449,10 @@ function Layout({ children, onLogout }: { children: ReactNode; onLogout: () => v
     const timer = window.setInterval(usage.reload, 60_000);
     return () => window.clearInterval(timer);
   }, [usage.reload]);
+  useEffect(() => {
+    document.documentElement.dataset.readingSize = readingSize;
+    try { window.localStorage.setItem("courtlistenerdash-reading-size", readingSize); } catch { /* Browser storage can be unavailable in hardened privacy modes. */ }
+  }, [readingSize]);
   useEffect(() => setMobileOpen(false), [location.pathname]);
   function globalSubmit(event: FormEvent) {
     event.preventDefault();
@@ -488,6 +504,19 @@ function Layout({ children, onLogout }: { children: ReactNode; onLogout: () => v
             <kbd>Enter</kbd>
           </form>
           <UsageIndicator usage={usage.data} />
+          <label className="reading-size-control">
+            <span className="reading-size-mark" aria-hidden="true">Aa</span>
+            <span className="reading-size-label">Text size</span>
+            <select
+              aria-label="Text size"
+              value={readingSize}
+              onChange={(event) => setReadingSize(event.target.value as ReadingSize)}
+            >
+              <option value="standard">Standard</option>
+              <option value="large">Large</option>
+              <option value="extra-large">Extra large</option>
+            </select>
+          </label>
           <Link className="connection-button" to="/settings" aria-label="CourtListener connection settings">
             <span className={`connection-dot ${status.data?.mcp === "connected" ? "online" : "offline"}`} />
             <span>{status.data?.mcp === "connected" ? "Connected" : "Connect"}</span>

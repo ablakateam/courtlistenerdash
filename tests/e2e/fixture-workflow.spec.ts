@@ -387,6 +387,11 @@ test("secondary controls fail safely and administrative settings remain isolated
   await page.getByLabel("Administrator password").fill(nextPassword);
   await page.getByRole("button", { name: "Sign in securely" }).click();
   await expect(page.getByRole("heading", { name: "Settings & Connections" })).toBeVisible();
+  await page.getByLabel("Current password").fill(nextPassword);
+  await page.getByLabel("New password", { exact: true }).fill(password);
+  await page.getByLabel("Confirm new password").fill(password);
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText(/Dashboard password changed/)).toBeVisible();
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Find the law. Follow the record." })).toBeVisible();
 });

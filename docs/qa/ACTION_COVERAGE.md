@@ -25,6 +25,7 @@ Status meanings:
 | Dashboard | Search start and suggested query | Partial | Global search start accepted; suggested-query button and status refresh remain open. |
 | Navigation | Every top-level route | Accepted | All 14 top-level destinations render; unknown routes return to Dashboard. |
 | Navigation | Mobile menu and sidebar collapse | Partial | Mobile menu accepted; desktop collapse remains open. |
+| Navigation | Standard, Large, and Extra large text | Accepted | Selection persists across reload; representative legal pages remain contained at Extra large on a phone. |
 | Global Search | Automatic multi-collection search | Accepted | Successful tabs and temporary-unavailability retry accepted. |
 | Legal Research | Keyword, exact citation, court choice, focused collection | Accepted | Includes CourtListener-provided court code and locked collection pages. |
 | Legal Research | Save authority, remove authority, continue results | Accepted | Includes local-storage failure notice and no stale success. |
@@ -38,7 +39,7 @@ Status meanings:
 | Page-aware assistant | Persistent launcher, page explanation, grounded answer, follow-up, exact source | Live + fixture accepted | Ollama answered a public case excerpt with a verified passage; deterministic browser covers conversation and source presentation. |
 | Page-aware assistant | Live page index, visible action inventory, trusted navigation, relevant-passage retrieval | Accepted | Unit coverage proves navigation questions retrieve available controls from a large page; browser acceptance proves the live index and action context are present. |
 | Page-aware assistant | Protected Settings, console, alert, saved, and RECAP contexts | Accepted | Backend unit test and browser assertion prove protected page text is not included in the provider request. |
-| Page-aware assistant | Mobile panel and WCAG review | Accepted | Responsive panel is included in the six-workflow serious/critical accessibility gate. |
+| Page-aware assistant | Mobile panel and WCAG review | Accepted | Responsive panel is included in the Chromium serious/critical accessibility gate. |
 | PACER / RECAP | Overview and chronological timeline | Live + fixture accepted | Known live docket and deterministic regression. |
 | PACER / RECAP | Documents, parties, attorneys, oral records | Accepted | Lazy-loaded tabs and internal document route exercised. |
 | PACER / RECAP | Pray and Pay / withdraw | Backend accepted | Confirmation binding is automated; cancel/confirmed fixture browser paths remain open. |
@@ -66,7 +67,8 @@ Status meanings:
 | Settings | Legal AI successful connection/removal | Backend live accepted | Paid Ollama catalog/chat and encrypted configuration paths pass; final deployed browser save/removal remains open. |
 | Settings | Password strength, change, session continuity | Accepted | Strong replacement, other-session revocation path, sign-out, and reauthentication pass. |
 | Failure UX | Seven CourtListener error categories | Backend accepted | Invalid request, authentication, rate limit, timeout, missing record, unavailable, and generic failure mappings are automated. |
-| Accessibility | Representative desktop/mobile WCAG checks | Accepted | No serious or critical findings in the current six-workflow suite, including the assistant on desktop and mobile. |
+| Accessibility | Representative desktop/mobile WCAG checks | Accepted | No serious or critical findings in the current Chromium product suite, including the assistant on desktop and mobile. |
+| Responsive compatibility | Core legal workspaces across browser engines and sizes | Accepted | Dashboard, case, RECAP docket, Jev Decision Lab, and Settings pass overflow/readability checks at four viewport sizes in Chromium, Firefox, and WebKit. |
 
 The open rows are the next browser-hardening queue. Live account-changing tools
 will not be exercised merely to turn a table green; fixture confirmation and

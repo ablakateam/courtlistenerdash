@@ -304,3 +304,34 @@ costs.
 Action: reproduce value on a frozen, attorney-reviewed CourtListener dataset;
 measure ranking, recall, calibration, latency, cost, adversarial behavior, and
 important jurisdiction/practice slices before recommending active use.
+
+## 2026-09-20 — Readability is a system contract, not a font-size patch
+
+Raising body text alone left metadata, tables, badges, the assistant, and
+experimental intelligence panels at independently chosen miniature sizes. Root
+scaling also exposed fixed-width header and narrow-card assumptions.
+
+Action: maintain shared micro, supporting, and body tokens; bound long-form
+reading width; offer a persistent user-controlled scale; and test the complete
+layout at every supported scale instead of reviewing isolated components.
+
+## 2026-09-20 — Internal overflow can become page overflow through grid sizing
+
+A table already had horizontal scrolling, but its grid parent retained the
+table's minimum content width. A Jev status label and a desktop-positioned usage
+popover created similar whole-page overflow on phones.
+
+Action: give grid panels and scroll wrappers `min-width: 0`, let headings wrap,
+and assert document width—not only screenshots—at representative routes and
+viewports. Include offending element details in the failed assertion.
+
+## 2026-09-20 — Security headers must match the actual transport boundary
+
+WebKit strictly followed `upgrade-insecure-requests` on the intentional HTTP
+loopback fixture server and attempted to retrieve its own assets over TLS. The
+page became blank even though Chromium and Firefox tolerated the same setup.
+
+Action: retain insecure-request upgrading for native HTTPS and explicitly
+trusted reverse-proxy deployments, but omit it for direct HTTP loopback review
+servers. Run the focused responsive gate in all three browser engines so a
+blank-engine failure cannot hide behind Chromium-only acceptance.

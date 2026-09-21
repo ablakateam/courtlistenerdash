@@ -314,6 +314,11 @@ export function createApp(deps: AppDependencies): Express {
           frameAncestors: ["'none'"],
           baseUri: ["'self'"],
           formAction: ["'self'"],
+          // WebKit upgrades loopback HTTP assets when this directive is
+          // present, which breaks the intentionally HTTP-only local review
+          // and fixture servers. HTTPS and explicitly trusted proxy
+          // deployments retain the upgrade instruction.
+          upgradeInsecureRequests: config.tlsEnabled || config.trustProxy ? [] : null,
         },
       },
       crossOriginResourcePolicy: { policy: "cross-origin" },

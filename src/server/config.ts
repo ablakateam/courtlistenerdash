@@ -59,7 +59,7 @@ const tlsKeyPath = process.env.COURTLISTENER_TLS_KEY
   : null;
 
 export const config = {
-  version: "1.3.0",
+  version: "1.4.0",
   host: process.env.COURTLISTENER_WEB_HOST || "0.0.0.0",
   port,
   publicPort,

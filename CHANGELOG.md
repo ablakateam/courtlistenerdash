@@ -8,6 +8,10 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Added
 
+- Persistent Standard, Large, and Extra large reading modes in the authenticated
+  header, stored per browser and available on every workspace.
+- A dedicated cross-engine responsive/readability gate covering Chromium,
+  Firefox, and WebKit at desktop, laptop, tablet, and phone dimensions.
 - Optional TypeSafe Jev System One integration as an independent typed-decision
   service for public CourtListener opinion results, using the official
   JavaScript SDK and pinned `jev-1.13.0` model by default.
@@ -84,10 +88,17 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Changed
 
+- The application version advances to 1.4.0 for the accessibility-first
+  reading and cross-browser responsive milestone.
+- Legal metadata, tables, helper text, navigation, Jev intelligence, and the
+  page-aware assistant now use a shared readable type scale instead of
+  scattered extra-small text.
+- Opinions and transcripts use a wider-leading, 78-character reading measure;
+  primary controls and navigation use larger touch and keyboard targets.
+- Phone headers now keep navigation, usage, reading size, connection state,
+  and a full-width global search available without crowding one row.
 - Semantic search now preserves its original legal research question and
   explicit intent for the optional Jev relevance decision service.
-- The application version advances to 1.3.0 for the experimental typed legal-
-  intelligence milestone.
 - Replaced deployment-specific branding, host references, and service
   identifiers with portable CourtListenerDash naming throughout the product,
   documentation, tests, installer, and screenshots.
@@ -112,6 +123,12 @@ under **Unreleased** until its production-readiness checks are complete.
 
 ### Fixed
 
+- Mobile usage details and Jev status labels no longer widen the complete page.
+- The compact mobile connection control retains its visible status indicator.
+- WebKit no longer upgrades assets on intentional loopback HTTP review servers;
+  HTTPS and trusted-proxy deployments retain CSP insecure-request upgrading.
+- Fixture password rotation restores the baseline credential so browser-engine
+  projects remain isolated and repeatable.
 - Bounded Jev evaluation no longer risks dropping CourtListener candidates
   beyond the first 30, including when the TypeSafe provider fails.
 - Active Jev mode now rejects moving `latest` and `preview` model aliases so a
@@ -172,6 +189,10 @@ under **Unreleased** until its production-readiness checks are complete.
   hardening installation.
 - The deterministic browser suite passes the primary legal workflow across
   desktop and mobile without spending CourtListener account quota.
+- Nine browser acceptances pass: seven Chromium workflows and the focused
+  responsive/readability matrix in Firefox and WebKit. The matrix covers
+  1440×900, 1024×768, 768×1024, and 390×844 without page-level horizontal
+  overflow in representative legal workspaces.
 - The supported systemd deployment passed loopback and private-network HTTPS
   health checks.
 - Four focused fixture-browser workflows pass in 11 seconds, covering every

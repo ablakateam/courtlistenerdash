@@ -66,6 +66,23 @@ documents, attachments, and oral arguments load only when selected, preserving
 the connected account's request allowance while keeping the docket easy to
 follow.
 
+## Designed for long legal reading sessions
+
+CourtListenerDash uses a deliberately generous type scale, high-contrast
+metadata, large controls, visible keyboard focus, and restrained line lengths.
+The header's **Text size** menu offers Standard, Large, and Extra large modes;
+the choice stays with that browser across pages and future visits.
+
+![Extra-large CourtListenerDash case workspace on a phone](docs/images/accessible-case-workspace-phone.png)
+
+The same research hierarchy adapts to desktop, laptop, tablet, and phone
+screens. On a phone, global search receives its own row, case metadata becomes
+a readable sequence, toolbars wrap into large targets, and wide legal tables or
+graphs scroll inside their own panels. Core responsive layouts are continuously
+checked in Chromium, Firefox, and WebKit—the browser engine used by Safari.
+This automated coverage complements, but does not replace, native screen-reader
+and physical-device review.
+
 ## What can I do with it?
 
 | Research need | What CourtListenerDash provides |
@@ -290,6 +307,7 @@ code:
 - [Current product-hardening audit](docs/qa/2026-09-19-product-hardening-audit.md)
 - [Latest private-LAN deployment acceptance](docs/qa/2026-09-20-deployment-acceptance.md)
 - [TypeSafe Jev prototype milestone and acceptance record](docs/qa/2026-09-20-typesafe-jev-milestone.md)
+- [UI readability and cross-browser responsive audit](docs/qa/2026-09-20-ui-readability-responsive-audit.md)
 - [Browser action coverage ledger](docs/qa/ACTION_COVERAGE.md)
 - [Lessons learned](docs/LESSONS_LEARNED.md)
 - [Architecture and trust boundaries](docs/ARCHITECTURE.md)

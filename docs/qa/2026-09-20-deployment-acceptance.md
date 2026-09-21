@@ -134,3 +134,27 @@ The page index exists only in browser memory and provider traffic begins only
 after an explicit question. It is not pixel-based screen capture, it does not
 read content that has not been rendered, and it does not replace the complete-
 opinion analysis pipeline.
+
+## UI readability and cross-browser follow-up acceptance
+
+Version **1.4.0** introduced the shared legal-reading scale, persistent text-
+size control, larger interaction targets, bounded long-form reading measure,
+responsive header organization, and the cross-engine acceptance project.
+
+| Check | Observed result | Status |
+|---|---|---|
+| Backend regression | 24 server/security tests passed | Passed |
+| Browser regression | Six complete Chromium product workflows passed | Passed |
+| Cross-engine interface | Responsive/readability audit passed in Chromium, Firefox, and WebKit | Passed |
+| Viewport coverage | 1440×900, 1024×768, 768×1024, and 390×844 | Passed |
+| Enlarged phone layout | Extra-large 20px root scale persisted after reload without page-level overflow | Passed |
+| Automated WCAG gate | No serious or critical findings on the enlarged phone case workspace | Passed |
+| Dependency audit | No known production vulnerability | Passed |
+| Installed service | `courtlistener-web.service` active and serving version 1.4.0 | Passed |
+| HTTPS proxy | nginx active on IPv4 and IPv6 port 443 with CSP and HSTS | Passed |
+| Private-network health | Loopback and all three configured LAN interfaces returned HTTP 200 and version 1.4.0 | Passed |
+
+The installer's first native HTTPS health attempt landed during the ordinary
+restart window and was refused; its built-in retry then completed. Independent
+post-restart validation used the supported nginx HTTPS route on loopback and
+each private-network interface. No unrelated application service was changed.

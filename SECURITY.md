@@ -8,6 +8,11 @@
   it requires the current password and invalidates every other active session.
 - The deployment uses HTTPS with a locally generated certificate. Production
   token setup is rejected over plain HTTP.
+- Content Security Policy upgrades insecure subresources for native HTTPS and
+  explicitly trusted reverse-proxy deployments. Intentional direct-HTTP
+  loopback review servers omit that directive so WebKit does not rewrite their
+  same-origin assets to nonexistent TLS; credential setup remains restricted
+  independently.
 - The CourtListener API token is submitted only to the backend, validated with
   the read-only `get_api_usage` MCP tool, and encrypted at rest with
   AES-256-GCM. The encryption key is kept in a root-owned systemd environment

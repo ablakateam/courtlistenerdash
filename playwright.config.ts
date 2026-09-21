@@ -14,9 +14,13 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
-    ...devices["Desktop Chrome"],
     viewport: { width: 1500, height: 1050 },
   },
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1500, height: 1050 } } },
+    { name: "firefox", testMatch: /responsive-readability\.spec\.ts/, use: { ...devices["Desktop Firefox"], viewport: { width: 1500, height: 1050 } } },
+    { name: "webkit", testMatch: /responsive-readability\.spec\.ts/, use: { ...devices["Desktop Safari"], viewport: { width: 1500, height: 1050 } } },
+  ],
   outputDir: "artifacts/playwright",
   webServer: fixtureMode ? {
     command: "npm run fixture:server",

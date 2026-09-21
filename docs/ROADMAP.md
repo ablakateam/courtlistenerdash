@@ -32,6 +32,10 @@ Status: **In progress**
 - [x] Add a repeatable live browser harness and initial verified screenshots
 - [x] Add exact-citation search and browser-verify a predictable authority
 - [x] Add automated WCAG checks and fix the first contrast findings
+- [x] Establish a readable legal-text scale, persistent enlargement control,
+      bounded opinion measure, and desktop/laptop/tablet/phone overflow gate
+- [x] Run the focused responsive/readability matrix in Chromium, Firefox, and
+      WebKit and keep it in continuous integration
 - [x] Distinguish minute, hour, and day throttles without long hourly waits
 - [x] Add local retry controls to primary legal-record workspaces
 - [x] Add a quota-free browser acceptance suite to continuous integration
@@ -53,7 +57,8 @@ Status: **In progress**
 - [ ] Exercise every read-only MCP tool with valid and invalid inputs
 - [ ] Validate state-changing tools through confirmation without creating
       unwanted account state
-- [ ] Complete accessibility, responsive, performance, and failure-state review
+- [ ] Complete native assistive-technology, performance, and remaining failure-
+      state review
 - [x] Publish the first verified screenshots and educational README
 - [x] Add QA-accepted oral-argument, judge, disclosure, and citation-
       verification screenshots without consuming live account quota
