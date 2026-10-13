@@ -40,7 +40,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "6.1.1",
-    "concurrently": "^10.0.5",
+    "concurrently": "^10.0.6",
     "tsx": "^4.21.0",
     "typescript": "7.0.2",
     "vite": "8.3.0"
